@@ -207,7 +207,7 @@ function get_key(){
     if [ -f ca.pem ];then
         echo -e "ca.pem [\033[32;1mfound\033[0m]"
     else
-        echo -e "ca.pem [\033[33;1mnot found\033[0m]"
+        echo -e "ca.pem [\033[32;1mauto create\032[0m]"
 		echo "auto create ca.pem ..."
 		ipsec pki --gen --outform pem > ca.pem
     fi
@@ -215,7 +215,7 @@ function get_key(){
 	if [ -f ca.cert.pem ];then
         echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
     else
-        echo -e "ca.cert.pem [\033[33;1mnot found\033[0m]"
+        echo -e "ca.cert.pem [\032[33;1mauto create\032[0m]"
 		echo "auto create ca.cert.pem ..."
 		ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
     fi

@@ -52,4 +52,4 @@ sysctl -p
 ```
 如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
 
-如有其他疑问请戳本人博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)
+如有其他疑问请戳原作者博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)

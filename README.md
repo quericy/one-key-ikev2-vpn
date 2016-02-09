@@ -1,11 +1,11 @@
-# 一键搭建适用于Ubuntu/CentOS的IKEV2/L2TP的VPN
+# 一键搭建适用于Debian的IKEV2/L2TP的VPN
 
 ------
 使用bash脚本一键搭建Ikev2的vpn
 
 说明
 =============
-> * 服务端要求：Ubuntu或者CentOS-6.*
+> * 服务端要求：Debian7/8.*
 > * 客户端：
  - iOS=>ikev1
  - Andriod=>ikev1

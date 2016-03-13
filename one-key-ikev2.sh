@@ -2,18 +2,20 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 #===============================================================================================
-#   System Required:  CentOS6.x (32bit/64bit) or Ubuntu
-#   Description:  Install IKEV2 VPN for CentOS and Ubuntu
+#   System Required: Debian
+#   Description:  Install IKEV2 VPN
 #   Author: quericy
 #   Intro:  http://quericy.me/blog/699
+#   Modified by Besto
 #===============================================================================================
 
 clear
 echo "#############################################################"
-echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+echo "# Install IKEV2 VPN"
 echo "# Intro: http://quericy.me/blog/699"
 echo "#"
-echo "# Author:quericy"
+echo "# Author: quericy"
+echo "# Modified by Besto"
 echo "#"
 echo "#############################################################"
 echo ""
@@ -21,10 +23,8 @@ echo ""
 # Install IKEV2
 function install_ikev2(){
 	rootness
-	disable_selinux
+	apt_install
 	get_my_ip
-	get_system
-	yum_install
 	pre_install
 	download_files
 	setup_strongswan
@@ -45,14 +45,6 @@ if [[ $EUID -ne 0 ]]; then
 fi
 }
 
-# Disable selinux
-function disable_selinux(){
-if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; then
-    sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
-    setenforce 0
-fi
-}
-
 # Get IP address of the server
 function get_my_ip(){
     echo "Preparing, Please wait a moment..."
@@ -63,41 +55,15 @@ function get_my_ip(){
 }
 
 
-# Ubuntu or CentOS
-function get_system(){
-	get_system_str=`cat /etc/issue`
-	echo "$get_system_str" |grep -q "CentOS"
-	if  [ $? -eq 0 ]
-	then
-		system_str="0"
-	else
-		echo "$get_system_str" |grep -q "Ubuntu"
-		if [ $? -eq 0 ]
-		then
-			system_str="1"
-		else
-			echo "This Script must be running at the CentOS or Ubuntu!"
-			exit 1
-		fi
-	fi
-	
-}
 
 # Pre-installation settings
 function pre_install(){
-	echo "#############################################################"
-	echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
-	echo "# Intro: http://quericy.me/blog/699"
-	echo "#"
-	echo "# Author:quericy"
-	echo "#"
-	echo "#############################################################"
 	echo ""
-    echo "please choose the type of your VPS(Xen、KVM: 1  ,  OpenVZ: 2):"
+    echo "please choose the type of your VPS(Xen/KVM: 1  ,  OpenVZ: 2):"
     read -p "your choice(1 or 2):" os_choice
     if [ "$os_choice" = "1" ]; then
         os="1"
-		os_str="Xen、KVM"
+		os_str="Xen/KVM"
 		else
 			if [ "$os_choice" = "2" ]; then
 				os="2"
@@ -151,14 +117,9 @@ function pre_install(){
 }
 
 #install necessary lib
-function yum_install(){
-	if [ "$system_str" = "0" ]; then
-	yum -y update
-	yum -y install pam-devel openssl-devel make gcc
-	else
+function apt_install(){
 	apt-get -y update
-	apt-get -y install libpam0g-dev libssl-dev make gcc
-	fi
+	apt-get -y install curl libpam0g-dev libssl-dev make gcc
 }
 
 # Download strongswan
@@ -166,7 +127,7 @@ function download_files(){
     if [ -f strongswan.tar.gz ];then
         echo -e "strongswan.tar.gz [\033[32;1mfound\033[0m]"
     else
-        if ! wget https://download.strongswan.org/strongswan-5.2.1.tar.gz;then
+        if ! wget https://download.strongswan.org/strongswan-5.3.5.tar.gz;then
             echo "Failed to download strongswan.tar.gz"
             exit 1
         fi
@@ -346,6 +307,9 @@ myUserName %any : EAP "myUserPass"
 # iptables set
 function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
+    iptables-save > /etc/iptables.rules.old
+    iptables -F
+    iptables -F -t nat
     if [ "$os" = "1" ]; then
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
@@ -357,7 +321,6 @@ function iptables_set(){
 		iptables -A INPUT -i eth0 -p udp --dport 4500 -j ACCEPT
 		iptables -A INPUT -i eth0 -p udp --dport 1701 -j ACCEPT
 		iptables -A INPUT -i eth0 -p tcp --dport 1723 -j ACCEPT
-		iptables -A FORWARD -j REJECT
 		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o eth0 -j MASQUERADE
 		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o eth0 -j MASQUERADE
 		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o eth0 -j MASQUERADE
@@ -372,21 +335,16 @@ function iptables_set(){
 		iptables -A INPUT -i venet0 -p udp --dport 4500 -j ACCEPT
 		iptables -A INPUT -i venet0 -p udp --dport 1701 -j ACCEPT
 		iptables -A INPUT -i venet0 -p tcp --dport 1723 -j ACCEPT
-		iptables -A FORWARD -j REJECT
 		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o venet0 -j MASQUERADE
 		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o venet0 -j MASQUERADE
 		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o venet0 -j MASQUERADE
     fi
-	if [ "$system_str" = "0" ]; then
-		service iptables save
-	else
-		iptables-save > /etc/iptables.rules
-		cat > /etc/network/if-up.d/iptables<<EOF
+    iptables-save > /etc/iptables.rules
+    cat > /etc/network/if-up.d/iptables<<EOF
 #!/bin/sh
 iptables-restore < /etc/iptables.rules
 EOF
-		chmod +x /etc/network/if-up.d/iptables
-	fi
+    chmod +x /etc/network/if-up.d/iptables
 }
 
 # echo the success info

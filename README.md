@@ -1,11 +1,11 @@
-# 一键搭建适用于Ubuntu/CentOS的IKEV2/L2TP的VPN
+# 一键搭建适用于Debian的IKEV2/L2TP的VPN
 
 ------
 使用bash脚本一键搭建Ikev2的vpn
 
 说明
 =============
-> * 服务端要求：Ubuntu或者CentOS-6.*
+> * 服务端要求：Debian7/8.*
 > * 客户端：
  - iOS=>ikev1
  - Andriod=>ikev1
@@ -52,4 +52,4 @@ sysctl -p
 ```
 如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
 
-如有其他疑问请戳本人博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)
+如有其他疑问请戳原作者博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)

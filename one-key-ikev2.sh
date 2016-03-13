@@ -23,8 +23,8 @@ echo ""
 # Install IKEV2
 function install_ikev2(){
 	rootness
-	get_my_ip
 	apt_install
+	get_my_ip
 	pre_install
 	download_files
 	setup_strongswan
@@ -119,7 +119,7 @@ function pre_install(){
 #install necessary lib
 function apt_install(){
 	apt-get -y update
-	apt-get -y install libpam0g-dev libssl-dev make gcc
+	apt-get -y install curl libpam0g-dev libssl-dev make gcc
 }
 
 # Download strongswan
@@ -307,6 +307,9 @@ myUserName %any : EAP "myUserPass"
 # iptables set
 function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
+    iptables-save > /etc/iptables.rules.old
+    iptables -F
+    iptables -F -t nat
     if [ "$os" = "1" ]; then
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT

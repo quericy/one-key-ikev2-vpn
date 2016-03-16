@@ -19,8 +19,10 @@
 ==========
 1.下载脚本:
 ```shell
- wget https://raw.githubusercontent.com/quericy/one-key-ikev2-vpn/master/one-key-ikev2.sh
+ wget --no-check-certificate https://raw.githubusercontent.com/quericy/one-key-ikev2-vpn/master/one-key-ikev2.sh
 ```
+> * 注:如需使用其他分支的脚本,请将上述url中的master修改为分支名称,各分支区别详见本页的[分支说明](#分支说明)节点
+
 2.运行(**如果有需要使用自己的根证书请将私钥命名为ca.pem，将根证书命名为ca.cert.pem，放到脚本的相同目录下再运行该脚本**)：
 ```shell
 chmod +x one-key-ikev2.sh
@@ -51,5 +53,11 @@ vim /etc/sysctl
 sysctl -p
 ```
 如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
+
+分支说明
+==========
+* [master](https://github.com/quericy/one-key-ikev2-vpn/tree/master)分支:稳定版,仅支持Ubuntu和CentOS-6.*,且iOS仅能使用ikev1认证;
+* [dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支:如需在Debian6/7 下使用,请使用该分支的脚本,该脚本由[bestoa](https://github.com/bestoa)修改提供;
+* [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:新增分支,用于测试一些新的功能,如使用最新版strongswan,并可能在未来尝试加入对iOS9的ikev2支持;
 
 如有其他疑问请戳本人博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)

@@ -166,12 +166,12 @@ function download_files(){
     if [ -f strongswan.tar.gz ];then
         echo -e "strongswan.tar.gz [\033[32;1mfound\033[0m]"
     else
-        if ! wget --no-check-certificate https://download.strongswan.org/strongswan-5.2.1.tar.gz;then
+        if ! wget --no-check-certificate https://download.strongswan.org/strongswan.tar.gz;then
             echo "Failed to download strongswan.tar.gz"
             exit 1
         fi
     fi
-    tar xzf strongswan*.tar.gz
+    tar xzf strongswan.tar.gz
     if [ $? -eq 0 ];then
         cd $cur_dir/strongswan-*/
     else
@@ -188,14 +188,14 @@ function setup_strongswan(){
 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  \
 --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap  \
 --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity  \
---enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp
+--enable-certexpire --enable-radattr --enable-swanctl --enable-openssl --disable-gmp
 
 	else
 		./configure  --enable-eap-identity --enable-eap-md5 \
 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  \
 --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap  \
 --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity  \
---enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp --enable-kernel-libipsec
+--enable-certexpire --enable-radattr --enable-swanctl --enable-openssl --disable-gmp --enable-kernel-libipsec
 
 	fi
 	make; make install
@@ -393,7 +393,7 @@ EOF
 function success_info(){
 	echo "#############################################################"
 	echo -e "#"
-	echo -e "# [\033[32;1mInstall Successful\033[0m]"
+	echo -e "# [\033[32;1mInstall Complete\033[0m]"
 	echo -e "# There is the default login info of your VPN"
 	echo -e "# UserName:\033[33;1m myUserName\033[0m"
 	echo -e "# PassWord:\033[33;1m myUserPass\033[0m"

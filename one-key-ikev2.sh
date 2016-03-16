@@ -22,9 +22,9 @@ echo ""
 function install_ikev2(){
 	rootness
 	disable_selinux
-	get_my_ip
 	get_system
 	yum_install
+	get_my_ip
 	pre_install
 	download_files
 	setup_strongswan
@@ -53,16 +53,6 @@ if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; t
 fi
 }
 
-# Get IP address of the server
-function get_my_ip(){
-    echo "Preparing, Please wait a moment..."
-    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
-    if [ -z $IP ]; then
-        IP=`curl -s ifconfig.me/ip`
-    fi
-}
-
-
 # Ubuntu or CentOS
 function get_system(){
 	get_system_str=`cat /etc/issue`
@@ -81,6 +71,26 @@ function get_system(){
 		fi
 	fi
 	
+}
+
+#install necessary lib
+function yum_install(){
+	if [ "$system_str" = "0" ]; then
+	yum -y update
+	yum -y install pam-devel openssl-devel make gcc curl
+	else
+	apt-get -y update
+	apt-get -y install libpam0g-dev libssl-dev make gcc curl
+	fi
+}
+
+# Get IP address of the server
+function get_my_ip(){
+    echo "Preparing, Please wait a moment..."
+    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    if [ -z $IP ]; then
+        IP=`curl -s ifconfig.me/ip`
+    fi
 }
 
 # Pre-installation settings
@@ -150,16 +160,6 @@ function pre_install(){
     cd $cur_dir
 }
 
-#install necessary lib
-function yum_install(){
-	if [ "$system_str" = "0" ]; then
-	yum -y update
-	yum -y install pam-devel openssl-devel make gcc
-	else
-	apt-get -y update
-	apt-get -y install libpam0g-dev libssl-dev make gcc
-	fi
-}
 
 # Download strongswan
 function download_files(){

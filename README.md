@@ -52,4 +52,10 @@ sysctl -p
 ```
 如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
 
+分支说明
+==========
+* master分支为稳定版,仅支持Ubuntu和CentOS-6.*,且iOS仅能使用ikev1认证.
+* 如需在Debian6/7 下使用,请使用[dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支的脚本,该脚本由[bestoa](https://github.com/bestoa)修改提供.
+* 新增dev分支,用于测试一些新的功能,如使用最新版strongswan,并可能在未来尝试加入对iOS9的ikev2支持.
+
 如有其他疑问请戳本人博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)

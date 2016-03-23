@@ -346,36 +346,47 @@ myUserName %any : EAP "myUserPass"
 # iptables set
 function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
+    ifconfig
+    echo "The above content is the network card information of your VPS."
+    echo "Please enter the name of the interface which can be connected to the public network."
     if [ "$os" = "1" ]; then
+    		read -p "Network card interface(default_vale:eth0):" interface
+		if [ "$interface" = "" ]; then
+			interface="eth0"
+		fi
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
 		iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
 		iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
-		iptables -A INPUT -i eth0 -p esp -j ACCEPT
-		iptables -A INPUT -i eth0 -p udp --dport 500 -j ACCEPT
-		iptables -A INPUT -i eth0 -p tcp --dport 500 -j ACCEPT
-		iptables -A INPUT -i eth0 -p udp --dport 4500 -j ACCEPT
-		iptables -A INPUT -i eth0 -p udp --dport 1701 -j ACCEPT
-		iptables -A INPUT -i eth0 -p tcp --dport 1723 -j ACCEPT
-		iptables -A FORWARD -j REJECT
-		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o eth0 -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o eth0 -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o eth0 -j MASQUERADE
+		iptables -A INPUT -i $interface -p esp -j ACCEPT
+		iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
+		iptables -A INPUT -i $interface -p tcp --dport 500 -j ACCEPT
+		iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
+		iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
+		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
+		#iptables -A FORWARD -j REJECT
+		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
 	else
+		read -p "Network card interface(default_vale:venet0):" interface
+		if [ "$interface" = "" ]; then
+			interface="venet0"
+		fi
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
 		iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
 		iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
-		iptables -A INPUT -i venet0 -p esp -j ACCEPT
-		iptables -A INPUT -i venet0 -p udp --dport 500 -j ACCEPT
-		iptables -A INPUT -i venet0 -p tcp --dport 500 -j ACCEPT
-		iptables -A INPUT -i venet0 -p udp --dport 4500 -j ACCEPT
-		iptables -A INPUT -i venet0 -p udp --dport 1701 -j ACCEPT
-		iptables -A INPUT -i venet0 -p tcp --dport 1723 -j ACCEPT
-		iptables -A FORWARD -j REJECT
-		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o venet0 -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o venet0 -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o venet0 -j MASQUERADE
+		iptables -A INPUT -i $interface -p esp -j ACCEPT
+		iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
+		iptables -A INPUT -i $interface -p tcp --dport 500 -j ACCEPT
+		iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
+		iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
+		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
+		#iptables -A FORWARD -j REJECT
+		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
     fi
 	if [ "$system_str" = "0" ]; then
 		service iptables save

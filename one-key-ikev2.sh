@@ -296,6 +296,25 @@ conn networkmanager-strongswan
     rightcert=client.cert.pem
     auto=add
 
+conn ios_ikev2
+    keyexchange=ikev2
+    ike=aes256-sha1-modp1024,3des-sha1-modp1024,aes256-sha1-modp1024!
+    esp=aes256-sha256,3des-sha1,aes256-sha1!
+    rekey=no
+    left=%defaultroute
+    leftid=${vps_ip}
+    leftsendcert=always
+    leftsubnet=0.0.0.0/0
+    leftcert=server.cert.pem
+    right=%any
+    rightauth=eap-mschapv2
+    rightsourceip=10.31.2.0/24
+    rightsendcert=never
+    eap_identity=%any
+    dpdaction=clear
+    fragmentation=yes
+    auto=add
+
 conn windows7
     keyexchange=ikev2
     ike=aes256-sha1-modp1024!

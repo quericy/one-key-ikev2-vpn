@@ -32,6 +32,7 @@ function install_ikev2(){
 	configure_ipsec
 	configure_strongswan
 	configure_secrets
+	SNAT_set
 	iptables_set
 	ipsec start
 	success_info
@@ -362,6 +363,20 @@ myUserName %any : EAP "myUserPass"
 	EOF
 }
 
+function SNAT_set(){
+    echo "Use SNAT could implove the speed,but your server MUST have static ip address."
+    read -p "yes or no?(default_vale:no):" use_SNAT
+    if [ "$use_SNAT" = "yes" ]; then
+    	use_SNAT_str="1"
+    	read -p "static ip(default_vale:${IP}):" static_ip
+	if [ "$static_ip" = "" ]; then
+		static_ip=$IP
+	fi
+    else
+    	use_SNAT_str="0"
+    fi
+}
+
 # iptables set
 function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
@@ -384,9 +399,15 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
 		#iptables -A FORWARD -j REJECT
-		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		if [ "$use_SNAT_str" = "1" ]; then
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		else
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		fi
 	else
 		read -p "Network card interface(default_vale:venet0):" interface
 		if [ "$interface" = "" ]; then
@@ -403,9 +424,15 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
 		#iptables -A FORWARD -j REJECT
-		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		if [ "$use_SNAT_str" = "1" ]; then
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		else
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		fi
     fi
 	if [ "$system_str" = "0" ]; then
 		service iptables save

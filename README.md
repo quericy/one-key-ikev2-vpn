@@ -15,6 +15,13 @@
 > * 证书可绑定域名或ip
 > * 要是图方便可一路回车
 
+最近更新
+==========
+> - 使用最新版strongswan,编译参数修改;
+> - 优化iptables包处理;
+> - 添加接口判断选择;
+> - 加入对iOS9的ikev2支持;
+
 服务端安装说明
 ==========
 1.下载脚本:
@@ -43,45 +50,49 @@ bash one-key-ikev2.sh
 
 客户端配置说明:
 =====
- 连接的服务器地址和证书保持一致,即取决于签发证书ca.cert.pem时使用的是ip还是域名;
+* 连接的服务器地址和证书保持一致,即取决于签发证书ca.cert.pem时使用的是ip还是域名;
  
- iOS/Android可使用ikeV1,认证方式为用户名+密码+预共享密钥(PSK);
+* iOS/OSX/Android可使用ikeV1,认证方式为用户名+密码+预共享密钥(PSK);
 
- iOS/OSX/Windows7+/WindowsPhone8.1+/Linux 均可使用IkeV2,认证方式为用户名+密码,均需要先导入证书;
- * 其中,iOS/OSX的远程ID和服务器地址保持一致,用户鉴定选择"用户名"
- * Windows PC系统导入证书需要导入到"本地计算机"的"受信任的根证书颁发机构",以"当前用户"的导入方式是无效的
+* iOS/OSX/Windows7+/WindowsPhone8.1+/Linux 均可使用IkeV2,认证方式为用户名+密码,均需要先导入证书,可将ca.cert.pem更改后缀名作为邮件附件发送给客户端,其中:
+ * iOS/OSX的远程ID和服务器地址保持一致,用户鉴定选择"用户名";
+ * Windows PC系统导入证书需要导入到"本地计算机"的"受信任的根证书颁发机构",以"当前用户"的导入方式是无效的.推荐运行mmc添加本地计算机的证书管理单元来操作;
  * WindowsPhone8.1登录时的用户名需要带上域信息,即wp"关于"页面的设备名称\用户名,也可以使用%any %any : EAP "密码"进行任意用户名登录,但指定了就不能添加其他用户名了.WindowPhone10的vpn貌似还存在bug(截至10586.164),ikeV2方式可连接但系统流量不会走vpn.
 
 卸载方式:
 ===
-1,进入脚本所在目录的strongswan文件夹执行:
+1.进入脚本所在目录的strongswan文件夹执行:
 ```bash
 make uninstall
 ```
-2,删除脚本所在目录的相关文件(one-key-ikev2.sh,strongswan.tar.gz,strongswan文件夹,my_key文件夹).
-3,卸载后记得检查iptables配置.
+
+2.删除脚本所在目录的相关文件(one-key-ikev2.sh,strongswan.tar.gz,strongswan文件夹,my_key文件夹).
+
+3.卸载后记得检查iptables配置.
 
 PS:
 ======
-* 服务器重启后默认ipsec不会自启动，请自行添加，或使用命令手动开启：
+* 服务器重启后默认ipsec不会自启动，请命令手动开启,或添加/usr/local/sbin/ipsec start到自启动脚本文件中(如rc.local等)：
 ```bash
 ipsec start
 ```
+
 * 连上服务器后无法链接外网：
+1.打开sysctl文件:
 ```bash
 vim /etc/sysctl
 ```
-修改net.ipv4.ip_forward=1后保存并关闭文件
-然后使用以下指令刷新sysctl：
+2.修改net.ipv4.ip_forward=1后保存并关闭文件
+3.使用以下指令刷新sysctl：
 ```bash
 sysctl -p
 ```
-如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
+4.如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
 
 分支说明
 ==========
-* [master](https://github.com/quericy/one-key-ikev2-vpn/tree/master)分支:稳定版,仅支持Ubuntu和CentOS-6.*,且iOS仅能使用ikev1认证;
+* [master](https://github.com/quericy/one-key-ikev2-vpn/tree/master)分支:经过测试的相对稳定的版本;
 * [dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支:如需在Debian6/7 下使用,请使用该分支的脚本,该脚本由[bestoa](https://github.com/bestoa)修改提供;
-* [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:新增分支,用于测试一些新的功能,如使用最新版strongswan,并可能在未来尝试加入对iOS9的ikev2支持;
+* [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:开发分支,未进过充分测试,用于尝试和添加一些新的功能;
 
 如有其他疑问请戳本人博客：[http://quericy.me/blog/699](http://quericy.me/blog/699)

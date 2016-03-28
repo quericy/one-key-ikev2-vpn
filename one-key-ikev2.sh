@@ -5,13 +5,13 @@ export PATH
 #   System Required:  CentOS6.x (32bit/64bit) or Ubuntu
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
-#   Intro:  http://quericy.me/blog/699
+#   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
 clear
 echo "#############################################################"
 echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
-echo "# Intro: http://quericy.me/blog/699"
+echo "# Intro: https://quericy.me/blog/699"
 echo "#"
 echo "# Author:quericy"
 echo "#"
@@ -32,6 +32,7 @@ function install_ikev2(){
 	configure_ipsec
 	configure_strongswan
 	configure_secrets
+	SNAT_set
 	iptables_set
 	ipsec start
 	success_info
@@ -97,7 +98,7 @@ function get_my_ip(){
 function pre_install(){
 	echo "#############################################################"
 	echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
-	echo "# Intro: http://quericy.me/blog/699"
+	echo "# Intro: https://quericy.me/blog/699"
 	echo "#"
 	echo "# Author:quericy"
 	echo "#"
@@ -166,7 +167,7 @@ function download_files(){
     if [ -f strongswan.tar.gz ];then
         echo -e "strongswan.tar.gz [\033[32;1mfound\033[0m]"
     else
-        if ! wget --no-check-certificate https://download.strongswan.org/strongswan-5.2.1.tar.gz;then
+        if ! wget --no-check-certificate https://download.strongswan.org/strongswan-5.3.5.tar.gz;then
             echo "Failed to download strongswan.tar.gz"
             exit 1
         fi
@@ -176,7 +177,7 @@ function download_files(){
         cd $cur_dir/strongswan-*/
     else
         echo ""
-        echo "Unzip strongswan.tar.gz failed! Please visit http://quericy.me/blog/699 and contact."
+        echo "Unzip strongswan.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
         exit 1
     fi
 }
@@ -188,14 +189,14 @@ function setup_strongswan(){
 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  \
 --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap  \
 --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity  \
---enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp
+--enable-certexpire --enable-radattr --enable-swanctl --enable-openssl --disable-gmp
 
 	else
 		./configure  --enable-eap-identity --enable-eap-md5 \
 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  \
 --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap  \
 --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity  \
---enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp --enable-kernel-libipsec
+--enable-certexpire --enable-radattr --enable-swanctl --enable-openssl --disable-gmp --enable-kernel-libipsec
 
 	fi
 	make; make install
@@ -207,7 +208,7 @@ function get_key(){
     if [ -f ca.pem ];then
         echo -e "ca.pem [\033[32;1mfound\033[0m]"
     else
-        echo -e "ca.pem [\033[32;1mauto create\032[0m]"
+        echo -e "ca.pem [\033[32;1mauto create\033[0m]"
 		echo "auto create ca.pem ..."
 		ipsec pki --gen --outform pem > ca.pem
     fi
@@ -215,7 +216,7 @@ function get_key(){
 	if [ -f ca.cert.pem ];then
         echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
     else
-        echo -e "ca.cert.pem [\032[33;1mauto create\032[0m]"
+        echo -e "ca.cert.pem [\033[33;1mauto create\033[0m]"
 		echo "auto create ca.cert.pem ..."
 		ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
     fi
@@ -296,6 +297,25 @@ conn networkmanager-strongswan
     rightcert=client.cert.pem
     auto=add
 
+conn ios_ikev2
+    keyexchange=ikev2
+    ike=aes256-sha1-modp1024,3des-sha1-modp1024,aes256-sha1-modp1024!
+    esp=aes256-sha256,3des-sha1,aes256-sha1!
+    rekey=no
+    left=%defaultroute
+    leftid=${vps_ip}
+    leftsendcert=always
+    leftsubnet=0.0.0.0/0
+    leftcert=server.cert.pem
+    right=%any
+    rightauth=eap-mschapv2
+    rightsourceip=10.31.2.0/24
+    rightsendcert=never
+    eap_identity=%any
+    dpdaction=clear
+    fragmentation=yes
+    auto=add
+
 conn windows7
     keyexchange=ikev2
     ike=aes256-sha1-modp1024!
@@ -343,6 +363,20 @@ myUserName %any : EAP "myUserPass"
 	EOF
 }
 
+function SNAT_set(){
+    echo "Use SNAT could implove the speed,but your server MUST have static ip address."
+    read -p "yes or no?(default_vale:no):" use_SNAT
+    if [ "$use_SNAT" = "yes" ]; then
+    	use_SNAT_str="1"
+    	read -p "static ip(default_vale:${IP}):" static_ip
+	if [ "$static_ip" = "" ]; then
+		static_ip=$IP
+	fi
+    else
+    	use_SNAT_str="0"
+    fi
+}
+
 # iptables set
 function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
@@ -364,10 +398,16 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
 		iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
-		iptables -A FORWARD -j REJECT
-		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		#iptables -A FORWARD -j REJECT
+		if [ "$use_SNAT_str" = "1" ]; then
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		else
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		fi
 	else
 		read -p "Network card interface(default_vale:venet0):" interface
 		if [ "$interface" = "" ]; then
@@ -383,10 +423,16 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
 		iptables -A INPUT -i $interface -p udp --dport 1701 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
-		iptables -A FORWARD -j REJECT
-		iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		#iptables -A FORWARD -j REJECT
+		if [ "$use_SNAT_str" = "1" ]; then
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		else
+		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		fi
     fi
 	if [ "$system_str" = "0" ]; then
 		service iptables save
@@ -404,7 +450,7 @@ EOF
 function success_info(){
 	echo "#############################################################"
 	echo -e "#"
-	echo -e "# [\033[32;1mInstall Successful\033[0m]"
+	echo -e "# [\033[32;1mInstall Complete\033[0m]"
 	echo -e "# There is the default login info of your VPN"
 	echo -e "# UserName:\033[33;1m myUserName\033[0m"
 	echo -e "# PassWord:\033[33;1m myUserPass\033[0m"

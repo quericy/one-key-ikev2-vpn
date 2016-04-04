@@ -299,7 +299,7 @@ conn networkmanager-strongswan
 
 conn ios_ikev2
     keyexchange=ikev2
-    ike=aes256-sha1-modp1024,3des-sha1-modp1024,aes256-sha1-modp1024!
+    ike=aes256-sha256-modp1024,3des-sha1-modp1024,aes256-sha1-modp1024!
     esp=aes256-sha256,3des-sha1,aes256-sha1!
     rekey=no
     left=%defaultroute

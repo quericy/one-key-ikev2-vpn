@@ -83,7 +83,7 @@ ipsec start
 * 连上服务器后无法链接外网：
 1.打开sysctl文件:
 ```bash
-vim /etc/sysctl
+vim /etc/sysctl.conf
 ```
 2.修改net.ipv4.ip_forward=1后保存并关闭文件
 3.使用以下指令刷新sysctl：

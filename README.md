@@ -96,6 +96,6 @@ sysctl -p
 ==========
 * [master](https://github.com/quericy/one-key-ikev2-vpn/tree/master)分支:经过测试的相对稳定的版本,使用strongswan-5.3.5;
 * [dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支:如需在Debian6/7 下使用,请使用该分支的脚本,该脚本由[bestoa](https://github.com/bestoa)修改提供;
-* [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:开发分支,使用最新版本的strongswan,未进过充分测试,用于尝试和添加一些新的功能,未来可能添加对L2TP的兼容支持;
+* [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:开发分支,使用最新版本的strongswan,未进过充分测试,用于尝试和添加一些新的功能,尝试解决iOS8分钟断开问题，未来可能添加对L2TP的兼容支持;
 
 如有其他疑问请戳本人博客：[https://quericy.me/blog/699](https://quericy.me/blog/699)

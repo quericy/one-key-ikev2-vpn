@@ -5,13 +5,13 @@ export PATH
 #   System Required:  CentOS6.x (32bit/64bit) or Ubuntu
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
-#   Intro:  http://quericy.me/blog/699
+#   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
 clear
 echo "#############################################################"
 echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
-echo "# Intro: http://quericy.me/blog/699"
+echo "# Intro: https://quericy.me/blog/699"
 echo "#"
 echo "# Author:quericy"
 echo "#"
@@ -98,7 +98,7 @@ function get_my_ip(){
 function pre_install(){
 	echo "#############################################################"
 	echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
-	echo "# Intro: http://quericy.me/blog/699"
+	echo "# Intro: https://quericy.me/blog/699"
 	echo "#"
 	echo "# Author:quericy"
 	echo "#"
@@ -177,7 +177,7 @@ function download_files(){
         cd $cur_dir/strongswan-*/
     else
         echo ""
-        echo "Unzip strongswan.tar.gz failed! Please visit http://quericy.me/blog/699 and contact."
+        echo "Unzip strongswan.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
         exit 1
     fi
 }

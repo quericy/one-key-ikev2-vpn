@@ -119,7 +119,7 @@ function pre_install(){
 			fi
     fi
 	echo "please input the ip (or domain) of your VPS:"
-    read -p "ip or domain(default_vale:${IP}):" vps_ip
+    read -p "ip or domain(default_value:${IP}):" vps_ip
 	if [ "$vps_ip" = "" ]; then
 		vps_ip=$IP
 	fi
@@ -365,10 +365,10 @@ myUserName %any : EAP "myUserPass"
 
 function SNAT_set(){
     echo "Use SNAT could implove the speed,but your server MUST have static ip address."
-    read -p "yes or no?(default_vale:no):" use_SNAT
+    read -p "yes or no?(default_value:no):" use_SNAT
     if [ "$use_SNAT" = "yes" ]; then
     	use_SNAT_str="1"
-    	read -p "static ip(default_vale:${IP}):" static_ip
+    	read -p "static ip(default_value:${IP}):" static_ip
 	if [ "$static_ip" = "" ]; then
 		static_ip=$IP
 	fi
@@ -384,7 +384,7 @@ function iptables_set(){
     echo "The above content is the network card information of your VPS."
     echo "Please enter the name of the interface which can be connected to the public network."
     if [ "$os" = "1" ]; then
-    		read -p "Network card interface(default_vale:eth0):" interface
+    		read -p "Network card interface(default_value:eth0):" interface
 		if [ "$interface" = "" ]; then
 			interface="eth0"
 		fi
@@ -409,7 +409,7 @@ function iptables_set(){
 		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
 		fi
 	else
-		read -p "Network card interface(default_vale:venet0):" interface
+		read -p "Network card interface(default_value:venet0):" interface
 		if [ "$interface" = "" ]; then
 			interface="venet0"
 		fi

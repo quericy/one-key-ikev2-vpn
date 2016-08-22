@@ -368,7 +368,8 @@ function SNAT_set(){
     read -p "yes or no?(default_value:no):" use_SNAT
     if [ "$use_SNAT" = "yes" ]; then
     	use_SNAT_str="1"
-    	read -p "static ip(default_value:${IP}):" static_ip
+    	echo "Some servers has elastic IP (AWS) or mapping IP.In this case,you should input the IP address which is binding in network interface."
+    	read -p "static ip or network interface ip (default_value:${IP}):" static_ip
 	if [ "$static_ip" = "" ]; then
 		static_ip=$IP
 	fi

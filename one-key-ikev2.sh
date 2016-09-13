@@ -2,18 +2,20 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 #===============================================================================================
-#   System Required:  CentOS6.x (32bit/64bit) or Ubuntu
+#   System Required:  CentOS6 & 7 (32bit/64bit) or Ubuntu
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
+#   Modify: liton
 #   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
 clear
 echo "#############################################################"
-echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) or Ubuntu"
 echo "# Intro: https://quericy.me/blog/699"
 echo "#"
 echo "# Author:quericy"
+echo "# Modify: liton"
 echo "#"
 echo "#############################################################"
 echo ""

@@ -88,19 +88,21 @@ function yum_install(){
 # Get IP address of the server
 function get_my_ip(){
     echo "Preparing, Please wait a moment..."
-    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
-    if [ -z $IP ]; then
-        IP=`curl -s ifconfig.me/ip`
+    #IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    IP=`curl http://members.3322.org/dyndns/getip`
+    #if [ -z $IP ]; then
+    #    IP=`curl -s ifconfig.me/ip`
     fi
 }
 
 # Pre-installation settings
 function pre_install(){
 	echo "#############################################################"
-	echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+	echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) or Ubuntu"
 	echo "# Intro: https://quericy.me/blog/699"
 	echo "#"
 	echo "# Author:quericy"
+	echo "# Modify by liton"
 	echo "#"
 	echo "#############################################################"
 	echo ""
@@ -167,7 +169,7 @@ function download_files(){
     if [ -f strongswan.tar.gz ];then
         echo -e "strongswan.tar.gz [\033[32;1mfound\033[0m]"
     else
-        if ! wget --no-check-certificate https://download.strongswan.org/strongswan-5.3.5.tar.gz;then
+        if ! wget --no-check-certificate https://download.strongswan.org/strongswan.tar.gz;then
             echo "Failed to download strongswan.tar.gz"
             exit 1
         fi
@@ -270,7 +272,7 @@ conn iOS_cert
     right=%any
     rightauth=pubkey
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightcert=client.cert.pem
     auto=add
 
@@ -282,7 +284,7 @@ conn android_xauth_psk
     right=%any
     rightauth=psk
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     auto=add
 
 conn networkmanager-strongswan
@@ -293,7 +295,7 @@ conn networkmanager-strongswan
     leftcert=server.cert.pem
     right=%any
     rightauth=pubkey
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightcert=client.cert.pem
     auto=add
 
@@ -309,7 +311,7 @@ conn ios_ikev2
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightsendcert=never
     eap_identity=%any
     dpdaction=clear
@@ -326,7 +328,7 @@ conn windows7
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightsendcert=never
     eap_identity=%any
     auto=add
@@ -390,9 +392,9 @@ function iptables_set(){
 			interface="eth0"
 		fi
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
+		iptables -A FORWARD -s 10.60.10.0/24  -j ACCEPT
 		iptables -A INPUT -i $interface -p esp -j ACCEPT
 		iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 500 -j ACCEPT
@@ -401,13 +403,13 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
 		#iptables -A FORWARD -j REJECT
 		if [ "$use_SNAT_str" = "1" ]; then
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j SNAT --to-source $static_ip
 		else
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j MASQUERADE
 		fi
 	else
 		read -p "Network card interface(default_value:venet0):" interface
@@ -415,9 +417,9 @@ function iptables_set(){
 			interface="venet0"
 		fi
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
+		iptables -A FORWARD -s 10.60.10.0/24  -j ACCEPT
 		iptables -A INPUT -i $interface -p esp -j ACCEPT
 		iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 500 -j ACCEPT
@@ -426,13 +428,13 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
 		#iptables -A FORWARD -j REJECT
 		if [ "$use_SNAT_str" = "1" ]; then
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j SNAT --to-source $static_ip
 		else
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j MASQUERADE
 		fi
     fi
 	if [ "$system_str" = "0" ]; then

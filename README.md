@@ -3,6 +3,10 @@
 ------
 [![Author](https://img.shields.io/badge/author-%40quericy-blue.svg)](https://quericy.me)   [![Platform](https://img.shields.io/badge/Platform-%20Ubuntu%2CCentOS%20-green.svg)]()  [![GitHub stars](https://img.shields.io/github/stars/quericy/one-key-ikev2-vpn.svg)](https://github.com/quericy/one-key-ikev2-vpn/stargazers)  [![GitHub license](https://img.shields.io/badge/license-GPLv3-yellowgreen.svg)](https://raw.githubusercontent.com/quericy/one-key-ikev2-vpn/master/LICENSE)
 
+修改自：https://github.com/quericy/one-key-ikev2-vpn
+
+更新：2016/09/14 适配 CentOS 7
+
 使用bash脚本一键搭建Ikev2的vpn服务端.
 
 特性

@@ -56,7 +56,7 @@ fi
 
 # Ubuntu or CentOS
 function get_system(){
-	get_system_str=`cat /etc/issue`
+	get_system_str=`lsb_release -a`
 	echo "$get_system_str" |grep -q "CentOS"
 	if  [ $? -eq 0 ]
 	then
@@ -68,7 +68,7 @@ function get_system(){
 			system_str="1"
 		else
 			echo "This Script must be running at the CentOS or Ubuntu!"
-			#exit 1
+			exit 1
 		fi
 	fi
 	

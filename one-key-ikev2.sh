@@ -68,7 +68,7 @@ function get_system(){
 			system_str="1"
 		else
 			echo "This Script must be running at the CentOS or Ubuntu!"
-			exit 1
+			#exit 1
 		fi
 	fi
 	

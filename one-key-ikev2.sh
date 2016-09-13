@@ -88,10 +88,10 @@ function yum_install(){
 # Get IP address of the server
 function get_my_ip(){
     echo "Preparing, Please wait a moment..."
-    #IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
-    IP=`curl http://members.3322.org/dyndns/getip`
-    #if [ -z $IP ]; then
-    #    IP=`curl -s ifconfig.me/ip`
+    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    #IP=`curl members.3322.org/dyndns/getip`
+    if [ -z $IP ]; then
+        IP=`curl -s members.3322.org/dyndns/getip`
     fi
 }
 
@@ -174,7 +174,7 @@ function download_files(){
             exit 1
         fi
     fi
-    tar xzf strongswan*.tar.gz
+    tar xzf strongswan.tar.gz
     if [ $? -eq 0 ];then
         cd $cur_dir/strongswan-*/
     else

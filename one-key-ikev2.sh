@@ -1,11 +1,9 @@
 #! /bin/bash
-###PATH=/bin:/sbin:/usr/bin:/usr/sbin:/bin:/sbin:~/bin
-###export PATH
 #===============================================================================================
 #   System Required:  CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
-#   Modify: liton, xuld
+#   Modified: Besto, liton, xuld
 #   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
@@ -14,8 +12,8 @@ echo "#############################################################"
 echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian"
 echo "# Intro: https://quericy.me/blog/699"
 echo "#"
-echo "# Author:quericy"
-echo "# Modify: liton, xuld"
+echo "# Author: quericy"
+echo "# Modified: Besto, liton, xuld"
 echo "#"
 echo "#############################################################"
 echo ""
@@ -101,6 +99,9 @@ function get_my_ip(){
     if [ -z $IP ]; then
         IP=`curl -s members.3322.org/dyndns/getip`
     fi
+    if [ -z $IP ]; then
+        IP=`curl -s ifconfig.me/ip`
+    fi
 }
 
 # Pre-installation settings
@@ -110,15 +111,15 @@ function pre_install(){
 	echo "# Intro: https://quericy.me/blog/699"
 	echo "#"
 	echo "# Author:quericy"
-	echo "# Modify by liton, xuld"
+	echo "# Modified: Besto, liton, xuld"
 	echo "#"
 	echo "#############################################################"
 	echo ""
-    echo "please choose the type of your VPS(Xen、KVM: 1  ,  OpenVZ: 2):"
+    echo "please choose the type of your VPS(Xen/KVM: 1, OpenVZ: 2):"
     read -p "your choice(1 or 2):" os_choice
     if [ "$os_choice" = "1" ]; then
         os="1"
-		os_str="Xen、KVM"
+		os_str="Xen/KVM"
 	else
 		if [ "$os_choice" = "2" ]; then
 			os="2"

@@ -1,21 +1,21 @@
 #! /bin/bash
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-export PATH
+###PATH=/bin:/sbin:/usr/bin:/usr/sbin:/bin:/sbin:~/bin
+###export PATH
 #===============================================================================================
-#   System Required:  CentOS6 & 7 (32bit/64bit) or Ubuntu
+#   System Required:  CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
-#   Modify: liton
+#   Modify: liton, xuld
 #   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
 clear
 echo "#############################################################"
-echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) or Ubuntu"
+echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian"
 echo "# Intro: https://quericy.me/blog/699"
 echo "#"
 echo "# Author:quericy"
-echo "# Modify: liton"
+echo "# Modify: liton, xuld"
 echo "#"
 echo "#############################################################"
 echo ""
@@ -69,8 +69,14 @@ function get_system(){
 		then
 			system_str="1"
 		else
-			echo "This Script must be running at the CentOS or Ubuntu!"
-			exit 1
+			echo "$get_system_str" |grep -q "Debian"
+			if [ $? -eq 0 ]
+			then
+				system_str="1"
+			else
+				echo "This Script must be running at the CentOS, Ubuntu or Debian!"
+				exit 1
+			fi
 		fi
 	fi
 	
@@ -79,11 +85,11 @@ function get_system(){
 #install necessary lib
 function yum_install(){
 	if [ "$system_str" = "0" ]; then
-	yum -y update
-	yum -y install pam-devel openssl-devel make gcc curl
+		yum -y update
+		yum -y install pam-devel openssl-devel make gcc curl
 	else
-	apt-get -y update
-	apt-get -y install libpam0g-dev libssl-dev make gcc curl
+		apt-get -y update
+		apt-get -y install libpam0g-dev libssl-dev make gcc curl
 	fi
 }
 
@@ -100,11 +106,11 @@ function get_my_ip(){
 # Pre-installation settings
 function pre_install(){
 	echo "#############################################################"
-	echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) or Ubuntu"
+	echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian"
 	echo "# Intro: https://quericy.me/blog/699"
 	echo "#"
 	echo "# Author:quericy"
-	echo "# Modify by liton"
+	echo "# Modify by liton, xuld"
 	echo "#"
 	echo "#############################################################"
 	echo ""
@@ -113,14 +119,14 @@ function pre_install(){
     if [ "$os_choice" = "1" ]; then
         os="1"
 		os_str="Xen、KVM"
+	else
+		if [ "$os_choice" = "2" ]; then
+			os="2"
+			os_str="OpenVZ"
 		else
-			if [ "$os_choice" = "2" ]; then
-				os="2"
-				os_str="OpenVZ"
-				else
-				echo "wrong choice!"
-				exit 1
-			fi
+			echo "wrong choice!"
+			exit 1
+		fi
     fi
 	echo "please input the ip (or domain) of your VPS:"
     read -p "ip or domain(default_value:${IP}):" vps_ip
@@ -128,19 +134,34 @@ function pre_install(){
 		vps_ip=$IP
 	fi
 	echo "please input the cert country(C):"
-    read -p "C(default value:com):" my_cert_c
+    read -p "C(default value:CN):" my_cert_c
 	if [ "$my_cert_c" = "" ]; then
-		my_cert_c="com"
+		my_cert_c="CN"
 	fi
 	echo "please input the cert organization(O):"
-    read -p "O(default value:myvpn):" my_cert_o
+    read -p "O(default value:vpn):" my_cert_o
 	if [ "$my_cert_o" = "" ]; then
-		my_cert_o="myvpn"
+		my_cert_o="vpn"
 	fi
 	echo "please input the cert common name(CN):"
     read -p "CN(default value:VPN CA):" my_cert_cn
 	if [ "$my_cert_cn" = "" ]; then
 		my_cert_cn="VPN CA"
+	fi
+	echo "please input the username to login:"
+    read -p "USERNAME(default xld):" my_user_name
+	if [ "$my_user_name" = "" ]; then
+		my_user_name="xld"
+	fi
+	echo "please input the password to login:"
+    read -p "USERPASS(default xld):" my_user_pass
+	if [ "$my_user_pass" = "" ]; then
+		my_user_pass="xld"
+	fi
+	echo "please input the psk key to login:"
+    read -p "USERNAME(default same as USERPASS):" my_user_psk
+	if [ "$my_user_psk" = "" ]; then
+		my_user_psk=$my_user_pass
 	fi
 	echo "####################################"
     get_char(){
@@ -209,12 +230,13 @@ function setup_strongswan(){
 # configure cert and key
 function get_key(){
 	cd $cur_dir
-    if [ -f ca.pem ];then
-        echo -e "ca.pem [\033[32;1mfound\033[0m]"
+	# Create Root CA.
+    if [ -f ca.key.pem ];then
+        echo -e "ca.key.pem [\033[32;1mfound\033[0m]"
     else
-        echo -e "ca.pem [\033[32;1mauto create\033[0m]"
-		echo "auto create ca.pem ..."
-		ipsec pki --gen --outform pem > ca.pem
+        echo -e "ca.key.pem [\033[32;1mauto create\033[0m]"
+		echo "auto create ca.key.pem ..."
+		ipsec pki --gen --outform pem > ca.key.pem
     fi
 	
 	if [ -f ca.cert.pem ];then
@@ -222,23 +244,21 @@ function get_key(){
     else
         echo -e "ca.cert.pem [\033[33;1mauto create\033[0m]"
 		echo "auto create ca.cert.pem ..."
-		ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
+		ipsec pki --self --in ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
     fi
-	if [ ! -d my_key ];then
-        mkdir my_key
-    fi
-	mv ca.pem my_key/ca.pem
-	mv ca.cert.pem my_key/ca.cert.pem
-	cd my_key
-	ipsec pki --gen --outform pem > server.pem	
-	ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
---cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
+
+	# Create Server CA.
+	ipsec pki --gen --outform pem > server.key.pem	
+	ipsec pki --pub --in server.key.pem | ipsec pki --issue --cacert ca.cert.pem \
+--cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
 --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
 --outform pem > server.cert.pem
-	ipsec pki --gen --outform pem > client.pem	
-	ipsec pki --pub --in client.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
+
+	# Create Client CA.
+	ipsec pki --gen --outform pem > client.key.pem	
+	ipsec pki --pub --in client.key.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
 	echo "configure the pkcs12 cert password(Can be empty):"
-	openssl pkcs12 -export -inkey client.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
+	openssl pkcs12 -export -inkey client.key.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
 	echo "####################################"
     get_char(){
         SAVEDSTTY=`stty -g`
@@ -250,19 +270,20 @@ function get_key(){
         stty $SAVEDSTTY
     }
     echo "Press any key to install ikev2 VPN cert"
-	cp -r ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
-	cp -r server.cert.pem /usr/local/etc/ipsec.d/certs/
-	cp -r server.pem /usr/local/etc/ipsec.d/private/
-	cp -r client.cert.pem /usr/local/etc/ipsec.d/certs/
-	cp -r client.pem  /usr/local/etc/ipsec.d/private/
+	cp -r ca.cert.pem /etc/ipsec.d/cacerts/
+	cp -r server.cert.pem /etc/ipsec.d/certs/
+	cp -r server.key.pem /etc/ipsec.d/private/
+	cp -r client.cert.pem /etc/ipsec.d/certs/
+	cp -r client.key.pem /etc/ipsec.d/private/
 	
 }
 
 # configure the ipsec.conf
 function configure_ipsec(){
- cat > /usr/local/etc/ipsec.conf<<-EOF
+ cat > /etc/ipsec.conf<<-EOF
 config setup
-    uniqueids=never 
+	strictcrlpolicy=no
+    uniqueids=no
 
 conn iOS_cert
     keyexchange=ikev1
@@ -340,7 +361,7 @@ EOF
 
 # configure the strongswan.conf
 function configure_strongswan(){
- cat > /usr/local/etc/strongswan.conf<<-EOF
+ cat > /etc/strongswan.conf<<-EOF
  charon {
         load_modular = yes
         duplicheck.enable = no
@@ -359,11 +380,13 @@ EOF
 
 # configure the ipsec.secrets
 function configure_secrets(){
-	cat > /usr/local/etc/ipsec.secrets<<-EOF
-: RSA server.pem
-: PSK "myPSKkey"
-: XAUTH "myXAUTHPass"
-myUserName %any : EAP "myUserPass"
+
+	
+	cat > /etc/ipsec.secrets<<-EOF
+: RSA server.key.pem
+: PSK "${my_user_psk}"
+: XAUTH "${my_user_psk}"
+${my_user_name} %any : EAP "${my_user_pass}"
 	EOF
 }
 
@@ -457,11 +480,11 @@ function success_info(){
 	echo -e "#"
 	echo -e "# [\033[32;1mInstall Complete\033[0m]"
 	echo -e "# There is the default login info of your VPN"
-	echo -e "# UserName:\033[33;1m myUserName\033[0m"
-	echo -e "# PassWord:\033[33;1m myUserPass\033[0m"
-	echo -e "# PSK:\033[33;1m myPSKkey\033[0m"
-	echo -e "# you can change UserName and PassWord in\033[32;1m /usr/local/etc/ipsec.secrets\033[0m"
-	echo -e "# you must copy the cert \033[32;1m ${cur_dir}/my_key/ca.cert.pem \033[0m to the client and install it."
+	echo -e "# UserName:\033[33;1m ${my_user_name}\033[0m"
+	echo -e "# PassWord:\033[33;1m ${my_user_pass}\033[0m"
+	echo -e "# PSK:\033[33;1m ${my_user_psk}\033[0m"
+	echo -e "# you can change UserName and PassWord in\033[32;1m /etc/ipsec.secrets\033[0m"
+	echo -e "# you must copy the cert \033[32;1m ${cur_dir}/ca.cert.pem or ${cur_dir}/ca.cert.p12 \033[0m to the client and install it."
 	echo -e "#"
 	echo -e "#############################################################"
 	echo -e ""

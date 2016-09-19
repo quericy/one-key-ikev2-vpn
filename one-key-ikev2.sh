@@ -453,6 +453,7 @@ function success_info(){
 	echo -e "#"
 	echo -e "# [\033[32;1mInstall Complete\033[0m]"
 	echo -e "# There is the default login info of your VPN"
+	echo -e "# Ip(or domain): [\033[32;1m$vps_ip\033[0m]"
 	echo -e "# UserName:\033[33;1m myUserName\033[0m"
 	echo -e "# PassWord:\033[33;1m myUserPass\033[0m"
 	echo -e "# PSK:\033[33;1m myPSKkey\033[0m"

@@ -258,40 +258,43 @@ function pre_install(){
     if [ ${interactive} -ne 0 ]; then
         echo "please input the ip (or domain) of your VPS:"
         read -p "ip or domain(default_value:${IP}):" vps_ip
-        if [ "$vps_ip" = "" ]; then
-            vps_ip=$IP
-        fi
         echo "please input the cert country(C):"
-        read -p "C(default value:CN):" my_cert_c
-        if [ "$my_cert_c" = "" ]; then
-            my_cert_c="CN"
-        fi
+        read -p "C(default value:${cert_country}):" my_cert_c
         echo "please input the cert organization(O):"
-        read -p "O(default value:vpn):" my_cert_o
-        if [ "$my_cert_o" = "" ]; then
-            my_cert_o="vpn"
-        fi
+        read -p "O(default value:${cert_organization}):" my_cert_o
         echo "please input the cert common name(CN):"
-        read -p "CN(default value:VPN CA):" my_cert_cn
-        if [ "$my_cert_cn" = "" ]; then
-            my_cert_cn="VPN CA"
-        fi
+        read -p "CN(default value:${cert_name}):" my_cert_cn
         echo "please input the username to login:"
         read -p "USERNAME(default ${default_user_name}):" my_user_name
-        if [ "$my_user_name" = "" ]; then
-            my_user_name=${default_user_name}
-        fi
         echo "please input the password to login:"
         read -p "USERPASS(default ${default_user_pass}):" my_user_pass
-        if [ "$my_user_pass" = "" ]; then
-            my_user_pass=${default_user_pass}
-        fi
         echo "please input the psk key to login:"
         read -p "USERPSK(default ${default_user_psk}):" my_user_psk
-        if [ "$my_user_psk" = "" ]; then
-            my_user_psk=${default_user_psk}
-        fi
+    fi
 
+    if [ "$vps_ip" = "" ]; then
+        vps_ip=$IP
+    fi
+    if [ "$my_cert_c" = "" ]; then
+        my_cert_c=${cert_country}
+    fi
+    if [ "$my_cert_o" = "" ]; then
+        my_cert_o=${cert_organization}
+    fi
+    if [ "$my_cert_cn" = "" ]; then
+        my_cert_cn=${cert_name}
+    fi
+    if [ "$my_user_name" = "" ]; then
+        my_user_name=${default_user_name}
+    fi
+    if [ "$my_user_pass" = "" ]; then
+        my_user_pass=${default_user_pass}
+    fi
+    if [ "$my_user_psk" = "" ]; then
+        my_user_psk=${default_user_psk}
+    fi
+
+    if [ ${interactive} -ne 0 ]; then
         echo "Please confirm the information:"
         echo ""
         echo -e "the type of your server: [\033[32;1m$vm_type_str\033[0m]"
@@ -536,10 +539,14 @@ function SNAT_set(){
 # iptables set
 function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
-    ifconfig
 
-    echo "The above content is the network card information of your VPS."
-    echo "Please enter the name of the interface which can be connected to the public network."
+    if [ ${interactive} -ne 0 ]; then
+        ifconfig
+
+        echo "The above content is the network card information of your VPS."
+        echo "Please enter the name of the interface which can be connected to the public network."
+    fi
+
     if [ "$vm_type" = "1" ]; then
         if [ ${interactive} -ne 0 ]; then
             read -p "Network card interface(default_value:eth0):" interface
@@ -616,8 +623,10 @@ function success_info(){
     echo "#############################################################"
     echo -e "#"
     echo -e "# [\033[32;1mInstall Complete\033[0m]"
+    echo -e "# Network card interface: [\033[32;1m${interface}\033[0m]"
+    echo -e "# Ip(or domain): \033[32;1m$vps_ip\033[0m"
+    echo -e "# Static ip address: \033[32;1m$static_ip\033[0m"
     echo -e "# There is the default login info of your VPN"
-    echo -e "# Ip(or domain): [\033[32;1m$vps_ip\033[0m]"
     echo -e "# UserName:\033[33;1m ${my_user_name}\033[0m"
     echo -e "# PassWord:\033[33;1m ${my_user_pass}\033[0m"
     echo -e "# PSK:\033[33;1m ${my_user_psk}\033[0m"

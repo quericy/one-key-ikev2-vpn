@@ -8,6 +8,9 @@
 #===============================================================================================
 
 default_strongswan="strongswan-5.3.5"
+default_user_name="vpn"
+default_user_pass="vpn"
+default_user_psk="vpn"
 
 clear
 echo "#############################################################"
@@ -160,7 +163,7 @@ function pre_install(){
     get_virt
 
 	echo "please input the ip (or domain) of your VPS:"
-    read -p "ip or domain(default_value:[\033[32;1m${IP}\033[0m]):" vps_ip
+    read -p "ip or domain(default_value:${IP}):" vps_ip
 	if [ "$vps_ip" = "" ]; then
 		vps_ip=$IP
 	fi
@@ -180,19 +183,19 @@ function pre_install(){
 		my_cert_cn="VPN CA"
 	fi
 	echo "please input the username to login:"
-    read -p "USERNAME(default xld):" my_user_name
+    read -p "USERNAME(default ${default_user_name}):" my_user_name
 	if [ "$my_user_name" = "" ]; then
-		my_user_name="xld"
+		my_user_name=${default_user_name}
 	fi
 	echo "please input the password to login:"
-    read -p "USERPASS(default xld):" my_user_pass
+    read -p "USERPASS(default ${default_user_pass}):" my_user_pass
 	if [ "$my_user_pass" = "" ]; then
-		my_user_pass="xld"
+		my_user_pass=${default_user_pass}
 	fi
 	echo "please input the psk key to login:"
-    read -p "USERNAME(default same as USERPASS):" my_user_psk
+    read -p "USERPSK(default ${default_user_psk}):" my_user_psk
 	if [ "$my_user_psk" = "" ]; then
-		my_user_psk=$my_user_pass
+		my_user_psk=${default_user_psk}
 	fi
 	echo "####################################"
     get_char(){
@@ -423,11 +426,11 @@ ${my_user_name} %any : EAP "${my_user_pass}"
 
 function SNAT_set(){
     echo "Use SNAT could implove the speed,but your server MUST have static ip address."
-    read -p "yes or no?(default_value:[\033[32;1mno\033[0m]):" use_SNAT
+    read -p "yes or no?(default_value:no):" use_SNAT
     if [ "$use_SNAT" = "yes" ]; then
     	use_SNAT_str="1"
     	echo "Some servers has elastic IP (AWS) or mapping IP.In this case,you should input the IP address which is binding in network interface."
-    	read -p "static ip or network interface ip (default_value:[\033[32;1m${IP}\033[0m]):" static_ip
+    	read -p "static ip or network interface ip (default_value:${IP}):" static_ip
 	if [ "$static_ip" = "" ]; then
 		static_ip=$IP
 	fi
@@ -443,7 +446,7 @@ function iptables_set(){
     echo "The above content is the network card information of your VPS."
     echo "Please enter the name of the interface which can be connected to the public network."
     if [ "$vm_type" = "1" ]; then
-    		read -p "Network card interface(default_value:[\033[32;1meth0\033[0m]):" interface
+    		read -p "Network card interface(default_value:eth0):" interface
 		if [ "$interface" = "" ]; then
 			interface="eth0"
 		fi
@@ -468,7 +471,7 @@ function iptables_set(){
 		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j MASQUERADE
 		fi
 	else
-		read -p "Network card interface(default_value:[\033[32;1mvenet0\033[0m]):" interface
+		read -p "Network card interface(default_value:venet0):" interface
 		if [ "$interface" = "" ]; then
 			interface="venet0"
 		fi

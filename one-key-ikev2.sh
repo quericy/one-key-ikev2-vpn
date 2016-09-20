@@ -167,7 +167,7 @@ function get_virt(){
         vm_type=2;
     fi
 
-    if [ ${interactive} -eq 0 ]; then
+    if [ $vm_type -eq 0 -a ${interactive} -eq 0 ]; then
         echo "Can't detect vps type, exit."
         exit 1
     fi

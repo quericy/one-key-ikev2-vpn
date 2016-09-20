@@ -1,19 +1,19 @@
 #! /bin/bash
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-export PATH
 #===============================================================================================
-#   System Required:  CentOS6.x (32bit/64bit) or Ubuntu
+#   System Required:  CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
+#   Modified: Besto, liton, xuld
 #   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
 clear
 echo "#############################################################"
-echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian"
 echo "# Intro: https://quericy.me/blog/699"
 echo "#"
-echo "# Author:quericy"
+echo "# Author: quericy"
+echo "# Modified: Besto, liton, xuld"
 echo "#"
 echo "#############################################################"
 echo ""
@@ -56,7 +56,7 @@ fi
 
 # Ubuntu or CentOS
 function get_system(){
-	get_system_str=`cat /etc/issue`
+	get_system_str=`lsb_release -a`
 	echo "$get_system_str" |grep -q "CentOS"
 	if  [ $? -eq 0 ]
 	then
@@ -67,8 +67,14 @@ function get_system(){
 		then
 			system_str="1"
 		else
-			echo "This Script must be running at the CentOS or Ubuntu!"
-			exit 1
+			echo "$get_system_str" |grep -q "Debian"
+			if [ $? -eq 0 ]
+			then
+				system_str="1"
+			else
+				echo "This Script must be running at the CentOS, Ubuntu or Debian!"
+				exit 1
+			fi
 		fi
 	fi
 }
@@ -91,7 +97,7 @@ function get_virt(){
         echo "This script can't detect your vps type automatically."
         echo "Choose the type of your VPS, Press Ctrl+C to quit: "
         while (( !vm_type )); do
-            options=("Xen„ÄÅKVM" "OpenVZ")
+            options=("Xen°¢KVM" "OpenVZ")
             select opt in "${options[@]}"; do
                 vm_type_str=$opt
                 case $REPLY in
@@ -132,6 +138,10 @@ function yum_install(){
 function get_my_ip(){
     echo "Preparing, Please wait a moment..."
     IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    #IP=`curl members.3322.org/dyndns/getip`
+    if [ -z $IP ]; then
+        IP=`curl -s members.3322.org/dyndns/getip`
+    fi
     if [ -z $IP ]; then
         IP=`curl -s ifconfig.me/ip`
     fi
@@ -140,10 +150,11 @@ function get_my_ip(){
 # Pre-installation settings
 function pre_install(){
 	echo "#############################################################"
-	echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+	echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian"
 	echo "# Intro: https://quericy.me/blog/699"
 	echo "#"
 	echo "# Author:quericy"
+	echo "# Modified: Besto, liton, xuld"
 	echo "#"
 	echo "#############################################################"
 	echo ""
@@ -156,19 +167,34 @@ function pre_install(){
 		vps_ip=$IP
 	fi
 	echo "please input the cert country(C):"
-    read -p "C(default value:com):" my_cert_c
+    read -p "C(default value:CN):" my_cert_c
 	if [ "$my_cert_c" = "" ]; then
-		my_cert_c="com"
+		my_cert_c="CN"
 	fi
 	echo "please input the cert organization(O):"
-    read -p "O(default value:myvpn):" my_cert_o
+    read -p "O(default value:vpn):" my_cert_o
 	if [ "$my_cert_o" = "" ]; then
-		my_cert_o="myvpn"
+		my_cert_o="vpn"
 	fi
 	echo "please input the cert common name(CN):"
     read -p "CN(default value:VPN CA):" my_cert_cn
 	if [ "$my_cert_cn" = "" ]; then
 		my_cert_cn="VPN CA"
+	fi
+	echo "please input the username to login:"
+    read -p "USERNAME(default xld):" my_user_name
+	if [ "$my_user_name" = "" ]; then
+		my_user_name="xld"
+	fi
+	echo "please input the password to login:"
+    read -p "USERPASS(default xld):" my_user_pass
+	if [ "$my_user_pass" = "" ]; then
+		my_user_pass="xld"
+	fi
+	echo "please input the psk key to login:"
+    read -p "USERNAME(default same as USERPASS):" my_user_psk
+	if [ "$my_user_psk" = "" ]; then
+		my_user_psk=$my_user_pass
 	fi
 	echo "####################################"
     get_char(){
@@ -204,7 +230,7 @@ function download_files(){
             exit 1
         fi
     fi
-    tar xzf strongswan*.tar.gz
+    tar xzf strongswan.tar.gz
     if [ $? -eq 0 ];then
         cd $cur_dir/strongswan-*/
     else
@@ -237,12 +263,13 @@ function setup_strongswan(){
 # configure cert and key
 function get_key(){
 	cd $cur_dir
-    if [ -f ca.pem ];then
-        echo -e "ca.pem [\033[32;1mfound\033[0m]"
+	# Create Root CA.
+    if [ -f ca.key.pem ];then
+        echo -e "ca.key.pem [\033[32;1mfound\033[0m]"
     else
-        echo -e "ca.pem [\033[32;1mauto create\033[0m]"
-		echo "auto create ca.pem ..."
-		ipsec pki --gen --outform pem > ca.pem
+        echo -e "ca.key.pem [\033[32;1mauto create\033[0m]"
+		echo "auto create ca.key.pem ..."
+		ipsec pki --gen --outform pem > ca.key.pem
     fi
 	
 	if [ -f ca.cert.pem ];then
@@ -250,23 +277,21 @@ function get_key(){
     else
         echo -e "ca.cert.pem [\033[33;1mauto create\033[0m]"
 		echo "auto create ca.cert.pem ..."
-		ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
+		ipsec pki --self --in ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
     fi
-	if [ ! -d my_key ];then
-        mkdir my_key
-    fi
-	mv ca.pem my_key/ca.pem
-	mv ca.cert.pem my_key/ca.cert.pem
-	cd my_key
-	ipsec pki --gen --outform pem > server.pem	
-	ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
---cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
+
+	# Create Server CA.
+	ipsec pki --gen --outform pem > server.key.pem	
+	ipsec pki --pub --in server.key.pem | ipsec pki --issue --cacert ca.cert.pem \
+--cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
 --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
 --outform pem > server.cert.pem
-	ipsec pki --gen --outform pem > client.pem	
-	ipsec pki --pub --in client.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
+
+	# Create Client CA.
+	ipsec pki --gen --outform pem > client.key.pem	
+	ipsec pki --pub --in client.key.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
 	echo "configure the pkcs12 cert password(Can be empty):"
-	openssl pkcs12 -export -inkey client.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
+	openssl pkcs12 -export -inkey client.key.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
 	echo "####################################"
     get_char(){
         SAVEDSTTY=`stty -g`
@@ -278,19 +303,20 @@ function get_key(){
         stty $SAVEDSTTY
     }
     echo "Press any key to install ikev2 VPN cert"
-	cp -r ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
-	cp -r server.cert.pem /usr/local/etc/ipsec.d/certs/
-	cp -r server.pem /usr/local/etc/ipsec.d/private/
-	cp -r client.cert.pem /usr/local/etc/ipsec.d/certs/
-	cp -r client.pem  /usr/local/etc/ipsec.d/private/
+	cp -r ca.cert.pem /etc/ipsec.d/cacerts/
+	cp -r server.cert.pem /etc/ipsec.d/certs/
+	cp -r server.key.pem /etc/ipsec.d/private/
+	cp -r client.cert.pem /etc/ipsec.d/certs/
+	cp -r client.key.pem /etc/ipsec.d/private/
 	
 }
 
 # configure the ipsec.conf
 function configure_ipsec(){
- cat > /usr/local/etc/ipsec.conf<<-EOF
+ cat > /etc/ipsec.conf<<-EOF
 config setup
-    uniqueids=never 
+	strictcrlpolicy=no
+    uniqueids=no
 
 conn iOS_cert
     keyexchange=ikev1
@@ -302,7 +328,7 @@ conn iOS_cert
     right=%any
     rightauth=pubkey
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightcert=client.cert.pem
     auto=add
 
@@ -314,7 +340,7 @@ conn android_xauth_psk
     right=%any
     rightauth=psk
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     auto=add
 
 conn networkmanager-strongswan
@@ -325,7 +351,7 @@ conn networkmanager-strongswan
     leftcert=server.cert.pem
     right=%any
     rightauth=pubkey
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightcert=client.cert.pem
     auto=add
 
@@ -341,7 +367,7 @@ conn ios_ikev2
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightsendcert=never
     eap_identity=%any
     dpdaction=clear
@@ -358,7 +384,7 @@ conn windows7
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.60.10.0/24
     rightsendcert=never
     eap_identity=%any
     auto=add
@@ -368,7 +394,7 @@ EOF
 
 # configure the strongswan.conf
 function configure_strongswan(){
- cat > /usr/local/etc/strongswan.conf<<-EOF
+ cat > /etc/strongswan.conf<<-EOF
  charon {
         load_modular = yes
         duplicheck.enable = no
@@ -387,11 +413,13 @@ EOF
 
 # configure the ipsec.secrets
 function configure_secrets(){
-	cat > /usr/local/etc/ipsec.secrets<<-EOF
-: RSA server.pem
-: PSK "myPSKkey"
-: XAUTH "myXAUTHPass"
-myUserName %any : EAP "myUserPass"
+
+	
+	cat > /etc/ipsec.secrets<<-EOF
+: RSA server.key.pem
+: PSK "${my_user_psk}"
+: XAUTH "${my_user_psk}"
+${my_user_name} %any : EAP "${my_user_pass}"
 	EOF
 }
 
@@ -422,9 +450,9 @@ function iptables_set(){
 			interface="eth0"
 		fi
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
+		iptables -A FORWARD -s 10.60.10.0/24  -j ACCEPT
 		iptables -A INPUT -i $interface -p esp -j ACCEPT
 		iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 500 -j ACCEPT
@@ -433,13 +461,13 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
 		#iptables -A FORWARD -j REJECT
 		if [ "$use_SNAT_str" = "1" ]; then
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j SNAT --to-source $static_ip
 		else
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j MASQUERADE
 		fi
 	else
 		read -p "Network card interface(default_value:venet0):" interface
@@ -447,9 +475,9 @@ function iptables_set(){
 			interface="venet0"
 		fi
 		iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-		iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
-		iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
+		#iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
+		iptables -A FORWARD -s 10.60.10.0/24  -j ACCEPT
 		iptables -A INPUT -i $interface -p esp -j ACCEPT
 		iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
 		iptables -A INPUT -i $interface -p tcp --dport 500 -j ACCEPT
@@ -458,13 +486,13 @@ function iptables_set(){
 		iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
 		#iptables -A FORWARD -j REJECT
 		if [ "$use_SNAT_str" = "1" ]; then
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j SNAT --to-source $static_ip
 		else
-		    iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
-		    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
+		    #iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
+		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j MASQUERADE
 		fi
     fi
 	if [ "$system_str" = "0" ]; then
@@ -486,11 +514,11 @@ function success_info(){
 	echo -e "# [\033[32;1mInstall Complete\033[0m]"
 	echo -e "# There is the default login info of your VPN"
 	echo -e "# Ip(or domain): [\033[32;1m$vps_ip\033[0m]"
-	echo -e "# UserName:\033[33;1m myUserName\033[0m"
-	echo -e "# PassWord:\033[33;1m myUserPass\033[0m"
-	echo -e "# PSK:\033[33;1m myPSKkey\033[0m"
-	echo -e "# you can change UserName and PassWord in\033[32;1m /usr/local/etc/ipsec.secrets\033[0m"
-	echo -e "# you must copy the cert \033[32;1m ${cur_dir}/my_key/ca.cert.pem \033[0m to the client and install it."
+	echo -e "# UserName:\033[33;1m ${my_user_name}\033[0m"
+	echo -e "# PassWord:\033[33;1m ${my_user_pass}\033[0m"
+	echo -e "# PSK:\033[33;1m ${my_user_psk}\033[0m"
+	echo -e "# you can change UserName and PassWord in\033[32;1m /etc/ipsec.secrets\033[0m"
+	echo -e "# you must copy the cert \033[32;1m ${cur_dir}/ca.cert.pem or ${cur_dir}/ca.cert.p12 \033[0m to the client and install it."
 	echo -e "#"
 	echo -e "#############################################################"
 	echo -e ""

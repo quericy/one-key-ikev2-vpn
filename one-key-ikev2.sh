@@ -97,7 +97,7 @@ function get_virt(){
         echo "This script can't detect your vps type automatically."
         echo "Choose the type of your VPS, Press Ctrl+C to quit: "
         while (( !vm_type )); do
-            options=("Xen¡¢KVM" "OpenVZ")
+            options=("Xen, KVM" "OpenVZ")
             select opt in "${options[@]}"; do
                 vm_type_str=$opt
                 case $REPLY in
@@ -114,24 +114,23 @@ function get_virt(){
 
 #install necessary lib
 function yum_install(){
-
-    echo "update yum before install?(yes:y, other key skip):"
+    echo "Update yum before install?(yes:y, other key skip):"
     read -p "your choice(y or any other):" yum_update
     if [ "$yum_update" = "y" ]; then
         if [ "$system_str" = "0" ]; then
-	yum -y update
-	else
-	apt-get -y update
-	fi
+            yum -y update
+        else
+            apt-get -y update
+        fi
     fi
 
-	if [ "$system_str" = "0" ]; then
-#	yum -y update
-	yum -y install pam-devel openssl-devel make gcc curl
-	else
-#	apt-get -y update
-	apt-get -y install libpam0g-dev libssl-dev make gcc curl
-	fi
+    if [ "$system_str" = "0" ]; then
+#        yum -y update
+        yum -y install pam-devel openssl-devel make gcc curl virt-what
+    else
+#        apt-get -y update
+        apt-get -y install libpam0g-dev libssl-dev make gcc curl virt-what
+    fi
 }
 
 # Get IP address of the server

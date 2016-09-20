@@ -218,7 +218,7 @@ function pre_install(){
     char=`get_char`
     #Current folder
     cur_dir=`pwd`
-    cd $cur_dir
+    cd ${cur_dir}
 }
 
 
@@ -234,7 +234,7 @@ function download_files(){
     fi
     tar xzf ${default_strongswan}.tar.gz
     if [ $? -eq 0 ];then
-        cd $cur_dir/${default_strongswan}/
+        cd ${cur_dir}/${default_strongswan}/
     else
         echo ""
         echo "Unzip ${default_strongswan}.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
@@ -264,9 +264,15 @@ function setup_strongswan(){
 
 # configure cert and key
 function get_key(){
-    cd $cur_dir
+
+    if [ ! -d ${vpn_key_folder} ];then
+        mkdir -p ${vpn_key_folder}
+    fi
+
+    cd ${vpn_key_folder}
+
     # Create Root CA.
-    if [ -f ca.key.pem ];then
+    if [ -f ca.key.pem ]; then
         echo -e "ca.key.pem [\033[32;1mfound\033[0m]"
     else
         echo -e "ca.key.pem [\033[32;1mauto create\033[0m]"
@@ -274,56 +280,45 @@ function get_key(){
         ipsec pki --gen --outform pem > ca.key.pem
     fi
 
-    if [ -f ca.cert.pem ];then
+    if [ -f ca.cert.pem ]; then
         echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
     else
         echo -e "ca.cert.pem [\033[33;1mauto create\033[0m]"
         echo "auto create ca.cert.pem ..."
-        ipsec pki --self --in ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
+        ipsec pki --self --in ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" \
+                --ca --outform pem > ca.cert.pem
     fi
-
-    if [ ! -d ${vpn_key_folder} ];then
-        mkdir ${vpn_key_folder}
-    fi
-    mv ca.key.pem ${vpn_key_folder}/ca.key.pem
-    mv ca.cert.pem ${vpn_key_folder}/ca.cert.pem
-    cd ${vpn_key_folder}
 
     # Create Server CA.
     ipsec pki --gen --outform pem > server.key.pem
     ipsec pki --pub --in server.key.pem | ipsec pki --issue --cacert ca.cert.pem \
---cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
---san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
---outform pem > server.cert.pem
+            --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
+            --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
+            --outform pem > server.cert.pem
 
     # Create Client CA.
     ipsec pki --gen --outform pem > client.key.pem
-    ipsec pki --pub --in client.key.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
-    echo "configure the pkcs12 cert password(Can be empty):"
-    openssl pkcs12 -export -inkey client.key.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
+    ipsec pki --pub --in client.key.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.key.pem \
+            --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
 
-    echo "####################################"
-    get_char(){
-        SAVEDSTTY=`stty -g`
-        stty -echo
-        stty cbreak
-        dd if=/dev/tty bs=1 count=1 2> /dev/null
-        stty -raw
-        stty echo
-        stty $SAVEDSTTY
-    }
-    echo "Press any key to install ikev2 VPN cert"
+    echo "configure the pkcs12 cert password(Can be empty):"
+    openssl pkcs12 -export -inkey client.key.pem -in client.cert.pem -name "client" -certfile ca.cert.pem \
+            -caname "${my_cert_cn}"  -out client.cert.p12 -passout pass:
+
+    echo "Install ikev2 VPN cert to folder /usr/local/etc/ipsec.d/"
+
     cp -r ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
     cp -r server.cert.pem /usr/local/etc/ipsec.d/certs/
     cp -r server.key.pem /usr/local/etc/ipsec.d/private/
     cp -r client.cert.pem /usr/local/etc/ipsec.d/certs/
     cp -r client.key.pem  /usr/local/etc/ipsec.d/private/
 
+    cd ${cur_dir}
 }
 
 # configure the ipsec.conf
 function configure_ipsec(){
- cat > /usr/local/etc/ipsec.conf<<-EOF
+    cat > /usr/local/etc/ipsec.conf<<-EOF
 config setup
     uniqueids=no
 
@@ -403,7 +398,7 @@ EOF
 
 # configure the strongswan.conf
 function configure_strongswan(){
- cat > /usr/local/etc/strongswan.conf<<-EOF
+    cat > /usr/local/etc/strongswan.conf<<-EOF
  charon {
         load_modular = yes
         duplicheck.enable = no
@@ -437,9 +432,9 @@ function SNAT_set(){
         use_SNAT_str="1"
         echo "Some servers has elastic IP (AWS) or mapping IP.In this case,you should input the IP address which is binding in network interface."
         read -p "static ip or network interface ip (default_value:${IP}):" static_ip
-    if [ "$static_ip" = "" ]; then
-        static_ip=$IP
-    fi
+        if [ "$static_ip" = "" ]; then
+            static_ip=$IP
+        fi
     else
         use_SNAT_str="0"
     fi

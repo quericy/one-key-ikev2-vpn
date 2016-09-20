@@ -676,14 +676,16 @@ function send_mail() {
         return
     fi
 
-    echo "Network card interface:${interface} \
-    Ip(or domain): $vps_ip \
-    Static ip address: $static_ip \
-    There is the default login info of your VPN \
-    UserName:${my_user_name} \
-    PassWord:${my_user_pass} \
-    PSK: ${my_user_psk} \
+    echo -e "Network card interface:${interface} \n\
+    Ip(or domain): $vps_ip \n\
+    Static ip address: $static_ip \n\n\
+    There is the default login info of your VPN \n\
+    UserName:${my_user_name} \n\
+    PassWord:${my_user_pass} \n\
+    PSK: ${my_user_psk} \n\n\
     Strongswan: ${default_strongswan}" | mutt -a ${vpn_key_folder}/* -s "vpn ${vps_ip}" -- ${mail_address}
+
+    echo -e "\033[32;1mmail vpn info to ${mail_address}.\033[0m"
 }
 
 # Initialization step

@@ -11,6 +11,7 @@ default_strongswan="strongswan-5.3.5"
 default_user_name="vpn"
 default_user_pass="vpn"
 default_user_psk="vpn"
+vpn_key_folder=`pwd`"/vpn_keys"
 
 clear
 echo "#############################################################"
@@ -281,19 +282,27 @@ function get_key(){
 		ipsec pki --self --in ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
     fi
 
+    if [ ! -d ${vpn_key_folder} ];then
+        mkdir ${vpn_key_folder}
+    fi
+	mv ca.key.pem ${vpn_key_folder}/ca.key.pem
+	mv ca.cert.pem ${vpn_key_folder}/ca.cert.pem
+	cd ${vpn_key_folder}
+
 	# Create Server CA.
-	ipsec pki --gen --outform pem > server.key.pem	
+	ipsec pki --gen --outform pem > server.key.pem
 	ipsec pki --pub --in server.key.pem | ipsec pki --issue --cacert ca.cert.pem \
 --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
 --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
 --outform pem > server.cert.pem
 
 	# Create Client CA.
-	ipsec pki --gen --outform pem > client.key.pem	
+	ipsec pki --gen --outform pem > client.key.pem
 	ipsec pki --pub --in client.key.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
 	echo "configure the pkcs12 cert password(Can be empty):"
 	openssl pkcs12 -export -inkey client.key.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
-	echo "####################################"
+
+    echo "####################################"
     get_char(){
         SAVEDSTTY=`stty -g`
         stty -echo
@@ -304,17 +313,17 @@ function get_key(){
         stty $SAVEDSTTY
     }
     echo "Press any key to install ikev2 VPN cert"
-	cp -r ca.cert.pem /etc/ipsec.d/cacerts/
-	cp -r server.cert.pem /etc/ipsec.d/certs/
-	cp -r server.key.pem /etc/ipsec.d/private/
-	cp -r client.cert.pem /etc/ipsec.d/certs/
-	cp -r client.key.pem /etc/ipsec.d/private/
+	cp -r ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
+	cp -r server.cert.pem /usr/local/etc/ipsec.d/certs/
+	cp -r server.key.pem /usr/local/etc/ipsec.d/private/
+	cp -r client.cert.pem /usr/local/etc/ipsec.d/certs/
+	cp -r client.key.pem  /usr/local/etc/ipsec.d/private/
 	
 }
 
 # configure the ipsec.conf
 function configure_ipsec(){
- cat > /etc/ipsec.conf<<-EOF
+ cat > /usr/local/etc/ipsec.conf<<-EOF
 config setup
 	strictcrlpolicy=no
     uniqueids=no
@@ -395,7 +404,7 @@ EOF
 
 # configure the strongswan.conf
 function configure_strongswan(){
- cat > /etc/strongswan.conf<<-EOF
+ cat > /usr/local/etc/strongswan.conf<<-EOF
  charon {
         load_modular = yes
         duplicheck.enable = no
@@ -414,14 +423,12 @@ EOF
 
 # configure the ipsec.secrets
 function configure_secrets(){
-
-	
-	cat > /etc/ipsec.secrets<<-EOF
+	cat > /usr/local/etc/ipsec.secrets<<-EOF
 : RSA server.key.pem
 : PSK "${my_user_psk}"
 : XAUTH "${my_user_psk}"
 ${my_user_name} %any : EAP "${my_user_pass}"
-	EOF
+EOF
 }
 
 function SNAT_set(){
@@ -518,8 +525,8 @@ function success_info(){
 	echo -e "# UserName:\033[33;1m ${my_user_name}\033[0m"
 	echo -e "# PassWord:\033[33;1m ${my_user_pass}\033[0m"
 	echo -e "# PSK:\033[33;1m ${my_user_psk}\033[0m"
-	echo -e "# you can change UserName and PassWord in\033[32;1m /etc/ipsec.secrets\033[0m"
-	echo -e "# you must copy the cert \033[32;1m ${cur_dir}/ca.cert.pem or ${cur_dir}/ca.cert.p12 \033[0m to the client and install it."
+	echo -e "# you can change UserName and PassWord in\033[32;1m /usr/local/etc/ipsec.secrets\033[0m"
+	echo -e "# you must copy the cert \033[32;1m ${vpn_key_folder}/ca.cert.pem \033[0m to the client and install it."
 	echo -e "#"
 	echo -e "#############################################################"
 	echo -e ""

@@ -71,7 +71,39 @@ function get_system(){
 			exit 1
 		fi
 	fi
-	
+}
+
+# Get VPS Type of Xen KVM or Openvz
+function get_virt(){
+    vm_type_str=`virt-what | paste -sd "," -`
+    vm_type=0
+
+    echo "$vm_type_str" | grep -q -E "xen|kvm"
+    if  [ $? -eq 0 -a $vm_type -eq 0 ]; then
+        vm_type=1;
+    fi
+    echo "$vm_type_str" | grep -q -E "openvz"
+    if  [ $? -eq 0 -a $vm_type -eq 0 ]; then
+        vm_type=2;
+    fi
+
+    if  [ $vm_type -eq 0 ]; then
+        echo "This script can't detect your vps type automatically."
+        echo "Choose the type of your VPS, Press Ctrl+C to quit: "
+        while (( !vm_type )); do
+            options=("Xen、KVM" "OpenVZ")
+            select opt in "${options[@]}"; do
+                vm_type_str=$opt
+                case $REPLY in
+                    1) vm_type=1; break ;;
+                    2) vm_type=2; break ;;
+                    *) echo "wrong choice, try again."; break ;;
+                esac
+            done
+        done
+    fi
+
+    #echo -e "get_virt result: vm_type=$vm_type, vm_type_str=$vm_type_str"
 }
 
 #install necessary lib
@@ -115,20 +147,9 @@ function pre_install(){
 	echo "#"
 	echo "#############################################################"
 	echo ""
-    echo "please choose the type of your VPS(Xen、KVM: 1  ,  OpenVZ: 2):"
-    read -p "your choice(1 or 2):" os_choice
-    if [ "$os_choice" = "1" ]; then
-        os="1"
-		os_str="Xen、KVM"
-		else
-			if [ "$os_choice" = "2" ]; then
-				os="2"
-				os_str="OpenVZ"
-				else
-				echo "wrong choice!"
-				exit 1
-			fi
-    fi
+
+    get_virt
+
 	echo "please input the ip (or domain) of your VPS:"
     read -p "ip or domain(default_value:${IP}):" vps_ip
 	if [ "$vps_ip" = "" ]; then
@@ -161,7 +182,7 @@ function pre_install(){
     }
     echo "Please confirm the information:"
 	echo ""
-	echo -e "the type of your server: [\033[32;1m$os_str\033[0m]"
+	echo -e "the type of your server: [\033[32;1m$vm_type_str\033[0m]"
 	echo -e "the ip(or domain) of your server: [\033[32;1m$vps_ip\033[0m]"
 	echo -e "the cert_info:[\033[32;1mC=${my_cert_c}, O=${my_cert_o}\033[0m]"
 	echo ""
@@ -195,7 +216,7 @@ function download_files(){
 
 # configure and install strongswan
 function setup_strongswan(){
-	if [ "$os" = "1" ]; then
+	if [ "$vm_type" = "1" ]; then
 		./configure  --enable-eap-identity --enable-eap-md5 \
 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  \
 --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap  \
@@ -395,7 +416,7 @@ function iptables_set(){
     ifconfig
     echo "The above content is the network card information of your VPS."
     echo "Please enter the name of the interface which can be connected to the public network."
-    if [ "$os" = "1" ]; then
+    if [ "$vm_type" = "1" ]; then
     		read -p "Network card interface(default_value:eth0):" interface
 		if [ "$interface" = "" ]; then
 			interface="eth0"

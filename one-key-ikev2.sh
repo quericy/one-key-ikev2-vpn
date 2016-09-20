@@ -45,6 +45,7 @@ static_ip=""
 interactive=0
 use_snat=0
 ignore_strongswan=0
+mail_address=""
 
 function show_help() {
     echo -e "Usage: $0 [arguments]"
@@ -70,10 +71,11 @@ function show_help() {
     echo -e "  -w            strongswan file name, default:\033[33;1m ${default_strongswan}\033[0m"
     echo -e "  -g            ignore download and build strongswan, default:\033[33;1m ${ignore_strongswan}\033[0m"
     echo -e "  -z            pass phrase source for ca, default:\033[33;1m ${ca_cert_password}\033[0m"
+    echo -e "  -m            send vpn server info and certs to mail address, default:\033[33;1m ${mail_address}\033[0m"
     echo -e "  -h            display this help and exit"
 }
 
-while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:" opt; do
+while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:m:" opt; do
     case "$opt" in
     h|\?) show_help; exit 0 ;;
     a)  yum_update="y" ;;
@@ -92,6 +94,7 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:" opt; do
     w)  default_strongswan=$OPTARG ;;
     g)  ignore_strongswan="y" ;;
     z)  ca_cert_password=$OPTARG ;;
+    m)  mail_address=$OPTARG ;;
     esac
 done
 
@@ -121,6 +124,7 @@ function install_ikev2(){
     iptables_set
     ipsec restart
     success_info
+    send_mail
 }
 
 # Make sure only root can run our script
@@ -216,9 +220,9 @@ function yum_install(){
     fi
 
     if [ "$os_type" = "1" ]; then
-        yum -y install pam-devel openssl-devel make gcc curl virt-what wget
+        yum -y install pam-devel openssl-devel make gcc curl virt-what wget mutt
     else
-        apt-get -y install libpam0g-dev libssl-dev make gcc curl virt-what wget
+        apt-get -y install libpam0g-dev libssl-dev make gcc curl virt-what wget mutt
     fi
 }
 
@@ -665,6 +669,21 @@ function success_info(){
     echo -e "#"
     echo -e "#############################################################"
     echo -e ""
+}
+
+function send_mail() {
+    if [ ${mail_address} = "" ]; then
+        return
+    fi
+
+    echo "Network card interface:${interface} \
+    Ip(or domain): $vps_ip \
+    Static ip address: $static_ip \
+    There is the default login info of your VPN \
+    UserName:${my_user_name} \
+    PassWord:${my_user_pass} \
+    PSK: ${my_user_psk} \
+    Strongswan: ${default_strongswan}" | mutt -a ${vpn_key_folder}/* -s "vpn ${vps_ip}" -- ${mail_address}
 }
 
 # Initialization step

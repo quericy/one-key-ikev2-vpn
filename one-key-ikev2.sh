@@ -41,6 +41,7 @@ vps_ip=""
 static_ip=""
 interactive=0
 use_snat=0
+ignore_strongswan=0
 
 function show_help() {
     echo -e "Usage: $0 [arguments]"
@@ -64,10 +65,11 @@ function show_help() {
     echo -e "  -s            Use SNAT, y for use. defalut: \033[33;1m ${use_snat}\033[0m"
     echo -e "  -f            Network card interface, default:\033[33;1m ${default_if}\033[0m"
     echo -e "  -w            strongswan file name, default:\033[33;1m ${default_strongswan}\033[0m"
+    echo -e "  -g            ignore download and build strongswan, default:\033[33;1m ${ignore_strongswan}\033[0m"
     echo -e "  -h            display this help and exit"
 }
 
-while getopts "h?adrconupkisfwbl:" opt; do
+while getopts "h?adrconupkisfwblg:" opt; do
     case "$opt" in
     h|\?) show_help; exit 0 ;;
     a)  yum_update="y" ;;
@@ -84,6 +86,7 @@ while getopts "h?adrconupkisfwbl:" opt; do
     s)  use_snat="y" ;;
     f)  default_if=$OPTARG ;;
     w)  default_strongswan=$OPTARG ;;
+    g)  ignore_strongswan="y" ;;
     esac
 done
 
@@ -311,6 +314,10 @@ function pre_install(){
 
 # Download strongswan
 function download_files(){
+    if [ "${ignore_strongswan}" = "y" ]; then
+        return
+    fi
+
     if [ -f ${default_strongswan}.tar.gz ];then
         echo -e "${default_strongswan}.tar.gz [\033[32;1mfound\033[0m]"
     else
@@ -333,6 +340,10 @@ function download_files(){
 
 # configure and install strongswan
 function setup_strongswan(){
+    if [ "${ignore_strongswan}" = "y" ]; then
+        return
+    fi
+
     if [ "$vm_type" = "1" ]; then
         ./configure  --enable-eap-identity --enable-eap-md5 \
             --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  \

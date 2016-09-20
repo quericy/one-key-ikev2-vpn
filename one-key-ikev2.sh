@@ -220,11 +220,19 @@ function yum_install(){
 # Get IP address of the server
 function get_my_ip(){
     echo "Preparing, try to retrive server ip address, Please wait a moment..."
-    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
-    #IP=`curl members.3322.org/dyndns/getip`
+
+    if [ -z $IP ]; then
+        IP=`curl -s ip.cn | awk -F"：| " '{print $3}'`
+    fi
+
+    if [ -z $IP ]; then
+        IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    fi
+
     if [ -z $IP ]; then
         IP=`curl -s members.3322.org/dyndns/getip`
     fi
+
     if [ -z $IP ]; then
         IP=`curl -s ifconfig.me/ip`
     fi

@@ -37,7 +37,7 @@ ca_cert_password=""
 cert_country="CN"
 cert_organization="vpn"
 cert_name="VPN CA"
-cert_password=""
+cert_password="pass"
 
 yum_update=0
 vps_ip=""
@@ -85,6 +85,7 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:m:" opt; do
     c)  cert_country=$OPTARG ;;
     o)  cert_organization=$OPTARG ;;
     n)  cert_name=$OPTARG ;;
+    b)  cert_password=$OPTARG ;;
     u)  default_user_name=$OPTARG ;;
     p)  default_user_pass=$OPTARG ;;
     k)  default_user_psk=$OPTARG ;;

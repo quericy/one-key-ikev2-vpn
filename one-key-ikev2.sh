@@ -69,7 +69,7 @@ function show_help() {
     echo -e "  -h            display this help and exit"
 }
 
-while getopts "h?adrconupkisfwblg:" opt; do
+while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:g" opt; do
     case "$opt" in
     h|\?) show_help; exit 0 ;;
     a)  yum_update="y" ;;

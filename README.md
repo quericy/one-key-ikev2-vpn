@@ -39,13 +39,13 @@ one-key-ikev2 is installed by running one of the following commands in your term
 #### via curl
 
 ```shell
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh)"
+bash <( curl -fsSL https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh )
 ```
 
 #### via wget
 
 ```shell
-bash -c "$(wget --no-check-certificate https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh -O -)"
+bash <( wget --no-check-certificate https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh -O - )
 ```
 
 1. 下载脚本:

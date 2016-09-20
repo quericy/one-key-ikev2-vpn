@@ -58,27 +58,24 @@ fi
 
 # Ubuntu or CentOS
 function get_system(){
-	get_system_str=`lsb_release -a`
-	echo "$get_system_str" |grep -q "CentOS"
-	if  [ $? -eq 0 ]
-	then
-		system_str="0"
-	else
-		echo "$get_system_str" |grep -q "Ubuntu"
-		if [ $? -eq 0 ]
-		then
-			system_str="1"
-		else
-			echo "$get_system_str" |grep -q "Debian"
-			if [ $? -eq 0 ]
-			then
-				system_str="1"
-			else
-				echo "This Script must be running at the CentOS, Ubuntu or Debian!"
-				exit 1
-			fi
-		fi
-	fi
+    os_type=0
+
+    which yum &> /dev/null
+    if [ $? -eq 0 -a $os_type -eq 0 ]; then
+        os_type=1
+    fi
+
+    which apt-get &> /dev/null
+    if [ $? -eq 0 -a $os_type -eq 0 ]; then
+        os_type=2
+    fi
+
+    if [ $os_type -eq 0 ]; then
+        echo "This Script must be running at the CentOS, Ubuntu or Debian!"
+        exit 1
+    fi
+
+#    echo "get_system result: os_type=$os_type"
 }
 
 # Get VPS Type of Xen KVM or Openvz
@@ -119,14 +116,14 @@ function yum_install(){
     echo "Update yum before install?(yes:y, other key skip):"
     read -p "your choice(y or any other):" yum_update
     if [ "$yum_update" = "y" ]; then
-        if [ "$system_str" = "0" ]; then
+        if [ "$os_type" = "1" ]; then
             yum -y update
         else
             apt-get -y update
         fi
     fi
 
-    if [ "$system_str" = "0" ]; then
+    if [ "$os_type" = "1" ]; then
 #        yum -y update
         yum -y install pam-devel openssl-devel make gcc curl virt-what
     else
@@ -496,7 +493,7 @@ function iptables_set(){
 		    iptables -t nat -A POSTROUTING -s 10.60.10.0/24 -o $interface -j MASQUERADE
 		fi
     fi
-	if [ "$system_str" = "0" ]; then
+	if [ "$os_type" = "1" ]; then
 		service iptables save
 	else
 		iptables-save > /etc/iptables.rules

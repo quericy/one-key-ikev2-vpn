@@ -7,6 +7,8 @@
 #   Intro:  https://quericy.me/blog/699
 #===============================================================================================
 
+default_strongswan="strongswan-5.3.5"
+
 clear
 echo "#############################################################"
 echo "# Install IKEV2 VPN for CentOS6 & 7 (32bit/64bit) , Ubuntu or Debian"
@@ -221,20 +223,20 @@ function pre_install(){
 
 # Download strongswan
 function download_files(){
-    if [ -f strongswan.tar.gz ];then
-        echo -e "strongswan.tar.gz [\033[32;1mfound\033[0m]"
+    if [ -f ${default_strongswan}.tar.gz ];then
+        echo -e "${default_strongswan}.tar.gz [\033[32;1mfound\033[0m]"
     else
-        if ! wget -c --no-check-certificate https://download.strongswan.org/strongswan-5.3.5.tar.gz;then
-            echo "Failed to download strongswan.tar.gz"
+        if ! wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz;then
+            echo "Failed to download ${default_strongswan}.tar.gz"
             exit 1
         fi
     fi
-    tar xzf strongswan.tar.gz
+    tar xzf ${default_strongswan}.tar.gz
     if [ $? -eq 0 ];then
-        cd $cur_dir/strongswan-*/
+        cd $cur_dir/${default_strongswan}/
     else
         echo ""
-        echo "Unzip strongswan.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
+        echo "Unzip ${default_strongswan}.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
         exit 1
     fi
 }

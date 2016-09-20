@@ -31,6 +31,9 @@ default_if="eth0"
 default_snat=0
 vpn_key_folder=`pwd`"/vpn_keys"
 
+ca_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/ca.key.pem.enc"
+ca_cert_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/ca.cert.pem.enc"
+ca_cert_password=""
 cert_country="CN"
 cert_organization="vpn"
 cert_name="VPN CA"
@@ -66,10 +69,11 @@ function show_help() {
     echo -e "  -f            Network card interface, default:\033[33;1m ${default_if}\033[0m"
     echo -e "  -w            strongswan file name, default:\033[33;1m ${default_strongswan}\033[0m"
     echo -e "  -g            ignore download and build strongswan, default:\033[33;1m ${ignore_strongswan}\033[0m"
+    echo -e "  -z            pass phrase source for ca, default:\033[33;1m ${ca_cert_password}\033[0m"
     echo -e "  -h            display this help and exit"
 }
 
-while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:g" opt; do
+while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:" opt; do
     case "$opt" in
     h|\?) show_help; exit 0 ;;
     a)  yum_update="y" ;;
@@ -87,6 +91,7 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:g" opt; do
     f)  default_if=$OPTARG ;;
     w)  default_strongswan=$OPTARG ;;
     g)  ignore_strongswan="y" ;;
+    z)  ca_cert_password=$OPTARG ;;
     esac
 done
 
@@ -211,9 +216,9 @@ function yum_install(){
     fi
 
     if [ "$os_type" = "1" ]; then
-        yum -y install pam-devel openssl-devel make gcc curl virt-what
+        yum -y install pam-devel openssl-devel make gcc curl virt-what wget
     else
-        apt-get -y install libpam0g-dev libssl-dev make gcc curl virt-what
+        apt-get -y install libpam0g-dev libssl-dev make gcc curl virt-what wget
     fi
 }
 
@@ -379,6 +384,9 @@ function get_key(){
     cd ${vpn_key_folder}
 
     # Create Root CA.
+    if [ ! ${ca_cert_password} = "" ]; then
+        curl -fsSL ${ca_key_url} | openssl enc -aes-256-cbc -a -k ${ca_cert_password} -d -out ca.key.pem
+    fi
     if [ -f ca.key.pem ]; then
         echo -e "ca.key.pem [\033[32;1mfound\033[0m]"
     else
@@ -387,6 +395,9 @@ function get_key(){
         ipsec pki --gen --outform pem > ca.key.pem
     fi
 
+    if [ ! ${ca_cert_password} = "" ]; then
+        curl -fsSL ${ca_cert_url} | openssl enc -aes-256-cbc -a -k ${ca_cert_password} -d -out ca.cert.pem
+    fi
     if [ -f ca.cert.pem ]; then
         echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
     else

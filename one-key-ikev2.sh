@@ -33,10 +33,12 @@ vpn_key_folder=`pwd`"/vpn_keys"
 
 ca_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/ca.key.pem.enc"
 ca_cert_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/ca.cert.pem.enc"
-ca_cert_password=""
+server_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/server.key.pem.enc"
+client_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/client.key.pem.enc"
+net_cert_password=""
 cert_country="CN"
-cert_organization="vpn"
-cert_name="VPN CA"
+cert_organization="VPN ORGANIZATION"
+cert_name="VPN ROOT CA"
 cert_password="pass"
 
 yum_update=0
@@ -70,7 +72,7 @@ function show_help() {
     echo -e "  -f            Network card interface, default:\033[33;1m ${default_if}\033[0m"
     echo -e "  -w            strongswan file name, default:\033[33;1m ${default_strongswan}\033[0m"
     echo -e "  -g            ignore download and build strongswan, default:\033[33;1m ${ignore_strongswan}\033[0m"
-    echo -e "  -z            pass phrase source for ca, default:\033[33;1m ${ca_cert_password}\033[0m"
+    echo -e "  -z            pass phrase source for ca, default:\033[33;1m ${net_cert_password}\033[0m"
     echo -e "  -m            send vpn server info and certs to mail address, default:\033[33;1m ${mail_address}\033[0m"
     echo -e "  -h            display this help and exit"
 }
@@ -94,7 +96,7 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:m:" opt; do
     f)  default_if=$OPTARG ;;
     w)  default_strongswan=$OPTARG ;;
     g)  ignore_strongswan="y" ;;
-    z)  ca_cert_password=$OPTARG ;;
+    z)  net_cert_password=$OPTARG ;;
     m)  mail_address=$OPTARG ;;
     esac
 done
@@ -389,8 +391,9 @@ function get_key(){
     cd ${vpn_key_folder}
 
     # Create Root CA.
-    if [ ! ${ca_cert_password} = "" ]; then
-        curl -fsSL ${ca_key_url} | openssl enc -aes-256-cbc -a -k ${ca_cert_password} -d -out ca.key.pem
+    if [ ! ${net_cert_password} = "" ]; then
+        echo -e "ca.key.pem [\033[32;1mdownloading...\033[0m]"
+        curl -fsSL ${ca_key_url} | openssl enc -aes-256-cbc -a -k ${net_cert_password} -d -out ca.key.pem
     fi
     if [ -f ca.key.pem ]; then
         echo -e "ca.key.pem [\033[32;1mfound\033[0m]"
@@ -400,8 +403,9 @@ function get_key(){
         ipsec pki --gen --outform pem > ca.key.pem
     fi
 
-    if [ ! ${ca_cert_password} = "" ]; then
-        curl -fsSL ${ca_cert_url} | openssl enc -aes-256-cbc -a -k ${ca_cert_password} -d -out ca.cert.pem
+    if [ ! ${net_cert_password} = "" ]; then
+        echo -e "ca.cert.pem [\033[32;1mdownloading...\033[0m]"
+        curl -fsSL ${ca_cert_url} | openssl enc -aes-256-cbc -a -k ${net_cert_password} -d -out ca.cert.pem
     fi
     if [ -f ca.cert.pem ]; then
         echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
@@ -413,16 +417,37 @@ function get_key(){
     fi
 
     # Create Server CA.
-    ipsec pki --gen --outform pem > server.key.pem
+    if [ ! ${net_cert_password} = "" ]; then
+        echo -e "server.key.pem [\033[32;1mdownloading...\033[0m]"
+        curl -fsSL ${server_key_url} | openssl enc -aes-256-cbc -a -k ${net_cert_password} -d -out server.key.pem
+    fi
+    if [ -f server.key.pem ]; then
+        echo -e "server.key.pem [\033[32;1mfound\033[0m]"
+    else
+        echo -e "server.key.pem [\033[32;1mauto create\033[0m]"
+        echo "auto create server.key.pem ..."
+        ipsec pki --gen --outform pem > server.key.pem
+    fi
+    
     ipsec pki --pub --in server.key.pem | ipsec pki --issue --cacert ca.cert.pem \
             --cakey ca.key.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
             --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
             --outform pem > server.cert.pem
 
     # Create Client CA.
-    ipsec pki --gen --outform pem > client.key.pem
+    if [ ! ${net_cert_password} = "" ]; then
+        echo -e "client.key.pem [\033[32;1mdownloading...\033[0m]"
+        curl -fsSL ${client_key_url} | openssl enc -aes-256-cbc -a -k ${net_cert_password} -d -out client.key.pem
+    fi
+    if [ -f client.key.pem ]; then
+        echo -e "client.key.pem [\033[32;1mfound\033[0m]"
+    else
+        echo -e "client.key.pem [\033[32;1mauto create\033[0m]"
+        echo "auto create client.key.pem ..."
+        ipsec pki --gen --outform pem > client.key.pem
+    fi
     ipsec pki --pub --in client.key.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.key.pem \
-            --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
+            --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client ${vps_ip}" --outform pem > client.cert.pem
 
     if [ ${interactive} -ne 0 ]; then
         echo "configure the pkcs12 cert password(Can be empty):"

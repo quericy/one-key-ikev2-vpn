@@ -342,7 +342,7 @@ function download_files(){
     wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz
 
     # check md5sum
-    curl -s https://www.strongswan.org/download.html | grep `md5sum ${default_strongswan}.tar.gz | awk '{print $1}'`
+    curl -s https://download.strongswan.org/${default_strongswan}.tar.gz.md5 | grep `md5sum ${default_strongswan}.tar.gz | awk '{print $1}'`
     if [ $? -ne 0 ]; then
         # something wrong with check md5. download again.
         rm -rf ${default_strongswan}.tar.gz

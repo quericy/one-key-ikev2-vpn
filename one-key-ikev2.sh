@@ -338,13 +338,22 @@ function download_files(){
         return
     fi
 
-    if [ -f ${default_strongswan}.tar.gz ];then
-        echo -e "${default_strongswan}.tar.gz [\033[32;1mfound\033[0m]"
-    else
-        if ! wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz;then
+    # try to download file with wget -c
+    wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz
+
+    # check md5sum
+    curl -s https://www.strongswan.org/download.html | grep `md5sum ${default_strongswan}.tar.gz | awk '{print $1}'`
+    if [ $? -ne 0 ]; then
+        # something wrong with check md5. download again.
+        rm -rf ${default_strongswan}.tar.gz
+        if ! wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz; then
             echo "Failed to download ${default_strongswan}.tar.gz"
             exit 1
         fi
+    fi
+
+    if [ -f ${default_strongswan}.tar.gz ];then
+        echo -e "${default_strongswan}.tar.gz [\033[32;1mfound\033[0m]"
     fi
 
     tar xzf ${default_strongswan}.tar.gz

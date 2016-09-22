@@ -23,7 +23,7 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our own variables:
 
-default_strongswan="strongswan-5.3.5"
+default_strongswan="5.5.0"
 default_user_name="vpn"
 default_user_pass="pass"
 default_user_psk="psk"
@@ -70,14 +70,14 @@ function show_help() {
     echo -e "  -i            prompt before using default value. defalut: \033[33;1m ${interactive}\033[0m"
     echo -e "  -s            Use SNAT, y for use. defalut: \033[33;1m ${use_snat}\033[0m"
     echo -e "  -f            Network card interface, default:\033[33;1m ${default_if}\033[0m"
-    echo -e "  -w            strongswan file name, default:\033[33;1m ${default_strongswan}\033[0m"
+    echo -e "  -v            strongswan file version, default:\033[33;1m ${default_strongswan}\033[0m"
     echo -e "  -g            ignore download and build strongswan, default:\033[33;1m ${ignore_strongswan}\033[0m"
     echo -e "  -z            pass phrase source for ca, default:\033[33;1m ${net_cert_password}\033[0m"
     echo -e "  -m            send vpn server info and certs to mail address, default:\033[33;1m ${mail_address}\033[0m"
     echo -e "  -h            display this help and exit"
 }
 
-while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:m:" opt; do
+while getopts "h?ad:r:c:o:n:u:p:k:isf:v:b:l:gz:m:" opt; do
     case "$opt" in
     h|\?) show_help; exit 0 ;;
     a)  yum_update="y" ;;
@@ -94,7 +94,7 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:w:b:l:gz:m:" opt; do
     i)  interactive=1 ;;
     s)  use_snat="y" ;;
     f)  default_if=$OPTARG ;;
-    w)  default_strongswan=$OPTARG ;;
+    v)  default_strongswan=$OPTARG ;;
     g)  ignore_strongswan="y" ;;
     z)  net_cert_password=$OPTARG ;;
     m)  mail_address=$OPTARG ;;
@@ -339,30 +339,30 @@ function download_files(){
     fi
 
     # try to download file with wget -c
-    wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz
+    wget -c --no-check-certificate https://download.strongswan.org/strongswan-${default_strongswan}.tar.gz
 
     # check md5sum
-    curl -s https://download.strongswan.org/${default_strongswan}.tar.gz.md5 | grep `md5sum ${default_strongswan}.tar.gz | awk '{print $1}'`
+    curl -s https://download.strongswan.org/strongswan-${default_strongswan}.tar.gz.md5 | grep `md5sum strongswan-${default_strongswan}.tar.gz | awk '{print $1}'`
     if [ $? -ne 0 ]; then
         # something wrong with check md5. download again.
-        rm -rf ${default_strongswan}.tar.gz
-        if ! wget -c --no-check-certificate https://download.strongswan.org/${default_strongswan}.tar.gz; then
-            echo "Failed to download ${default_strongswan}.tar.gz"
+        rm -rf strongswan-${default_strongswan}.tar.gz
+        if ! wget -c --no-check-certificate https://download.strongswan.org/strongswan-${default_strongswan}.tar.gz; then
+            echo "Failed to download strongswan-${default_strongswan}.tar.gz"
             exit 1
         fi
     fi
 
-    if [ -f ${default_strongswan}.tar.gz ];then
-        echo -e "${default_strongswan}.tar.gz [\033[32;1mfound\033[0m]"
+    if [ -f strongswan-${default_strongswan}.tar.gz ];then
+        echo -e "strongswan-${default_strongswan}.tar.gz [\033[32;1mfound\033[0m]"
     fi
 
-    tar xzf ${default_strongswan}.tar.gz
+    tar xzf strongswan-${default_strongswan}.tar.gz
 
     if [ $? -eq 0 ];then
-        cd ${cur_dir}/${default_strongswan}/
+        cd ${cur_dir}/strongswan-${default_strongswan}/
     else
         echo ""
-        echo "Unzip ${default_strongswan}.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
+        echo "Unzip strongswan-${default_strongswan}.tar.gz failed! Please visit https://quericy.me/blog/699 and contact."
         exit 1
     fi
 }
@@ -724,7 +724,7 @@ function send_mail() {
     UserName:${my_user_name} \n\
     PassWord:${my_user_pass} \n\
     PSK: ${my_user_psk} \n\n\
-    Strongswan: ${default_strongswan}" |
+    Strongswan: strongswan-${default_strongswan}" |
 
     mutt -e "set envelope_from=yes" -e "set from=xy.kong@gmail.com" -a ${vpn_key_folder}/* -s "VPN ${vps_region}" -- ${mail_address}
 

@@ -711,14 +711,22 @@ function send_mail() {
         return
     fi
 
-    echo -e "Network card interface:${interface} \n\
+    vps_region=`curl -s ip.cn?ip=$vps_ip`
+    static_region=`curl -s ip.cn?ip=$static_ip`
+
+    echo -e "\
+    Network card interface:${interface} \n\
     Ip(or domain): $vps_ip \n\
+    Region: $vps_region \n\
     Static ip address: $static_ip \n\n\
+    Region: $static_region \n\
     There is the default login info of your VPN \n\
     UserName:${my_user_name} \n\
     PassWord:${my_user_pass} \n\
     PSK: ${my_user_psk} \n\n\
-    Strongswan: ${default_strongswan}" | mutt -a ${vpn_key_folder}/* -s "vpn ${vps_ip}" -- ${mail_address}
+    Strongswan: ${default_strongswan}" |
+
+    mutt -e "set envelope_from=yes" -e "set from=xy.kong@gmail.com" -a ${vpn_key_folder}/* -s "VPN ${vps_region}" -- ${mail_address}
 
     echo -e "\033[32;1mmail vpn info to ${mail_address}.\033[0m"
 }

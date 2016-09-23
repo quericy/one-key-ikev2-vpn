@@ -35,6 +35,7 @@ ca_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/ce
 ca_cert_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/ca.cert.pem.enc"
 server_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/server.key.pem.enc"
 client_key_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/certs/client.key.pem.enc"
+mobileconfig_url="https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/IKEv2.mobileconfig"
 net_cert_password=""
 cert_country="CN"
 cert_organization="one-key-ikev2.sh"
@@ -731,7 +732,8 @@ function generate_mobileconfig() {
     #my_cert_o
     vpn_profile_id="${vps_ip}.65C5030D-4E4D-4236-B341-D3EA53AB4E25"
 
-    sed "s/{my_user_name}/${my_user_name}/g" IKEv2.mobileconfig |
+    curl -fsSL ${client_key_url} |
+    sed "s/{my_user_name}/${my_user_name}/g" |
     sed "s/{my_user_pass}/${my_user_pass}/g" |
     sed "s/{vps_ip}/${vps_ip}/g" |
     sed "s/{vpn_name}/${vpn_name}/g" |

@@ -732,17 +732,17 @@ function generate_mobileconfig() {
     #my_cert_o
     vpn_profile_id="${vps_ip}.65C5030D-4E4D-4236-B341-D3EA53AB4E25"
 
-    curl -fsSL ${client_key_url} |
-    sed "s/{my_user_name}/${my_user_name}/g" |
-    sed "s/{my_user_pass}/${my_user_pass}/g" |
-    sed "s/{vps_ip}/${vps_ip}/g" |
-    sed "s/{vpn_name}/${vpn_name}/g" |
-    sed "s/{ca_pfx_base64}/${ca_pfx_base64}/g" |
-    sed "s/{my_cert_cn}/${my_cert_cn}/g" |
-    sed "s/{cert_password}/${cert_password}/g" |
-    sed "s/{vpn_desc}/${vpn_desc}/g" |
-    sed "s/{my_cert_o}/${my_cert_o}/g" |
-    sed "s/{vpn_profile_id}/${vpn_profile_id}/g" > ${vpn_key_folder}/${vps_ip}.IKEv2.mobileconfig
+    curl -fsSL ${mobileconfig_url} |
+    sed "s#{my_user_name}#${my_user_name}#g" |
+    sed "s#{my_user_pass}#${my_user_pass}#g" |
+    sed "s#{vps_ip}#${vps_ip}#g" |
+    sed "s#{vpn_name}#${vpn_name}#g" |
+    sed "s#{ca_pfx_base64}#${ca_pfx_base64}#g" |
+    sed "s#{my_cert_cn}#${my_cert_cn}#g" |
+    sed "s#{cert_password}#${cert_password}#g" |
+    sed "s#{vpn_desc}#${vpn_desc}#g" |
+    sed "s#{my_cert_o}#${my_cert_o}#g" |
+    sed "s#{vpn_profile_id}#${vpn_profile_id}#g" > ${vpn_key_folder}/${vps_ip}.IKEv2.mobileconfig
 }
 
 function send_mail() {

@@ -724,7 +724,7 @@ function generate_mobileconfig() {
     #my_user_name
     #my_user_pass
     #vps_ip
-    vpn_name=`curl -s ip.cn?ip=$vps_ip | awk -F " |：" '{print $2$4}'`
+    vpn_name=`curl -s ip.cn?ip=$vps_ip | awk -F " |：" '{print $2"("$4")"}'`
     ca_pfx_base64=`base64 ${vpn_key_folder}/ca.cert.p12 | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g'`
     #my_cert_cn
     #cert_password

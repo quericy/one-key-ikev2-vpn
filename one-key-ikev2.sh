@@ -123,21 +123,30 @@ function pre_install(){
 	if [ "$vps_ip" = "" ]; then
 		vps_ip=$IP
 	fi
-	echo "please input the cert country(C):"
-    read -p "C(default value:com):" my_cert_c
-	if [ "$my_cert_c" = "" ]; then
-		my_cert_c="com"
-	fi
-	echo "please input the cert organization(O):"
-    read -p "O(default value:myvpn):" my_cert_o
-	if [ "$my_cert_o" = "" ]; then
-		my_cert_o="myvpn"
-	fi
-	echo "please input the cert common name(CN):"
-    read -p "CN(default value:VPN CA):" my_cert_cn
-	if [ "$my_cert_cn" = "" ]; then
-		my_cert_cn="VPN CA"
-	fi
+
+	echo "Would you want to import existing cert? You NEED copy your cert file to the same directory of this script"
+    read -p "yes or no?(default_value:no):" have_cert
+    if [ "$have_cert" = "yes" ]; then
+    	have_cert="1"
+    else
+    	have_cert="0"
+    	echo "please input the cert country(C):"
+        read -p "C(default value:com):" my_cert_c
+	    if [ "$my_cert_c" = "" ]; then
+		    my_cert_c="com"
+	    fi
+	    echo "please input the cert organization(O):"
+        read -p "O(default value:myvpn):" my_cert_o
+	    if [ "$my_cert_o" = "" ]; then
+	    	my_cert_o="myvpn"
+	    fi
+	    echo "please input the cert common name(CN):"
+        read -p "CN(default value:VPN CA):" my_cert_cn
+	    if [ "$my_cert_cn" = "" ]; then
+	    	my_cert_cn="VPN CA"
+	    fi
+    fi
+
 	echo "####################################"
     get_char(){
         SAVEDSTTY=`stty -g`
@@ -152,7 +161,15 @@ function pre_install(){
 	echo ""
 	echo -e "the type of your server: [\033[32;1m$os_str\033[0m]"
 	echo -e "the ip(or domain) of your server: [\033[32;1m$vps_ip\033[0m]"
-	echo -e "the cert_info:[\033[32;1mC=${my_cert_c}, O=${my_cert_o}\033[0m]"
+	if [ "$have_cert" = "1" ]; then
+    	echo -e "\033[32;1mThese are the certificate you MUST be prepared:\033[0m"
+    	echo -e "[\033[32;1m ca.cert.pem \033[0m]:The CA cert or the chain cert."
+    	echo -e "[\033[32;1m server.cert.pem \033[0m]:Your server cert."
+    	echo -e "[\033[32;1m server.pem \033[0m]:Your private key of the server cert."
+    	echo -e "[\033[32;1m Please copy these file to the same directory of this script before you start! \033[0m]"
+    else
+        echo -e "the cert_info:[\033[32;1mC=${my_cert_c}, O=${my_cert_o}\033[0m]"
+    fi
 	echo ""
     echo "Press any key to start...or Press Ctrl+C to cancel"
 	char=`get_char`
@@ -205,36 +222,15 @@ function setup_strongswan(){
 # configure cert and key
 function get_key(){
 	cd $cur_dir
-    if [ -f ca.pem ];then
-        echo -e "ca.pem [\033[32;1mfound\033[0m]"
-    else
-        echo -e "ca.pem [\033[32;1mauto create\033[0m]"
-		echo "auto create ca.pem ..."
-		ipsec pki --gen --outform pem > ca.pem
-    fi
-	
-	if [ -f ca.cert.pem ];then
-        echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
-    else
-        echo -e "ca.cert.pem [\033[33;1mauto create\033[0m]"
-		echo "auto create ca.cert.pem ..."
-		ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
-    fi
 	if [ ! -d my_key ];then
         mkdir my_key
     fi
-	mv ca.pem my_key/ca.pem
-	mv ca.cert.pem my_key/ca.cert.pem
-	cd my_key
-	ipsec pki --gen --outform pem > server.pem	
-	ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
---cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
---san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
---outform pem > server.cert.pem
-	ipsec pki --gen --outform pem > client.pem	
-	ipsec pki --pub --in client.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
-	echo "configure the pkcs12 cert password(Can be empty):"
-	openssl pkcs12 -export -inkey client.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
+    if [ "$have_cert" = "1" ]; then
+        import_cert
+    else
+        create_cert
+    fi
+
 	echo "####################################"
     get_char(){
         SAVEDSTTY=`stty -g`
@@ -245,13 +241,60 @@ function get_key(){
         stty echo
         stty $SAVEDSTTY
     }
-    echo "Press any key to install ikev2 VPN cert"
-	cp -r ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
-	cp -r server.cert.pem /usr/local/etc/ipsec.d/certs/
-	cp -r server.pem /usr/local/etc/ipsec.d/private/
-	cp -r client.cert.pem /usr/local/etc/ipsec.d/certs/
-	cp -r client.pem  /usr/local/etc/ipsec.d/private/
-	
+    echo "Press any key to install ikeV2 VPN cert"
+	cp -f ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
+	cp -f server.cert.pem /usr/local/etc/ipsec.d/certs/
+	cp -f server.pem /usr/local/etc/ipsec.d/private/
+	cp -f client.cert.pem /usr/local/etc/ipsec.d/certs/
+	cp -f client.pem  /usr/local/etc/ipsec.d/private/
+}
+
+# import cert if user has ssl certificate
+function import_cert(){
+   cd $cur_dir
+   if [ -f ca.cert.pem ];then
+        cp -f ca.cert.pem my_key/ca.cert.pem
+        echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
+    else
+        echo -e "ca.cert.pem [\033[33;1mNot found!\033[0m]"
+        exit
+    fi
+    if [ -f server.cert.pem ];then
+        cp -f server.cert.pem my_key/server.cert.pem
+        cp -f server.cert.pem my_key/client.cert.pem
+        echo -e "server.cert.pem [\033[32;1mfound\033[0m]"
+        echo -e "client.cert.pem [\033[32;1mauto create\033[0m]"
+    else
+        echo -e "server.cert.pem [\033[33;1mNot found!\033[0m]"
+        exit
+    fi
+    if [ -f server.pem ];then
+        cp -f server.pem my_key/server.pem
+        cp -f server.pem my_key/client.pem
+        echo -e "server.pem [\033[32;1mfound\033[0m]"
+        echo -e "client.pem [\033[32;1mauto create\033[0m]"
+    else
+        echo -e "server.pem [\033[33;1mNot found!\033[0m]"
+        exit
+    fi
+    cd my_key
+}
+
+# auto create certificate
+function create_cert(){
+    cd $cur_dir
+    cd my_key
+    ipsec pki --gen --outform pem > ca.pem
+    ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
+    ipsec pki --gen --outform pem > server.pem
+    ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
+    --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
+    --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
+    --outform pem > server.cert.pem
+    ipsec pki --gen --outform pem > client.pem
+    ipsec pki --pub --in client.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
+    echo "configure the pkcs12 cert password(Can be empty):"
+    openssl pkcs12 -export -inkey client.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
 }
 
 # configure the ipsec.conf
@@ -360,7 +403,7 @@ function configure_secrets(){
 : PSK "myPSKkey"
 : XAUTH "myXAUTHPass"
 myUserName %any : EAP "myUserPass"
-	EOF
+EOF
 }
 
 function SNAT_set(){
@@ -439,7 +482,7 @@ function iptables_set(){
 		service iptables save
 	else
 		iptables-save > /etc/iptables.rules
-		cat > /etc/network/if-up.d/iptables<<EOF
+		cat > /etc/network/if-up.d/iptables<<-EOF
 #!/bin/sh
 iptables-restore < /etc/iptables.rules
 EOF
@@ -452,12 +495,17 @@ function success_info(){
 	echo "#############################################################"
 	echo -e "#"
 	echo -e "# [\033[32;1mInstall Complete\033[0m]"
-	echo -e "# There is the default login info of your VPN"
+	echo -e "# There is the default login info of your IPSec/IkeV2 VPN Service"
 	echo -e "# UserName:\033[33;1m myUserName\033[0m"
 	echo -e "# PassWord:\033[33;1m myUserPass\033[0m"
 	echo -e "# PSK:\033[33;1m myPSKkey\033[0m"
-	echo -e "# you can change UserName and PassWord in\033[32;1m /usr/local/etc/ipsec.secrets\033[0m"
-	echo -e "# you must copy the cert \033[32;1m ${cur_dir}/my_key/ca.cert.pem \033[0m to the client and install it."
+	echo -e "# you should change default username and password in\033[32;1m /usr/local/etc/ipsec.secrets\033[0m"
+	echo -e "# you cert:\033[32;1m ${cur_dir}/my_key/ca.cert.pem \033[0m"
+	if [ "$have_cert" = "1" ]; then
+	echo -e "# you don't need to install cert if it's be trusted."
+	else
+	echo -e "# you must copy the cert to the client and install it."
+	fi
 	echo -e "#"
 	echo -e "#############################################################"
 	echo -e ""

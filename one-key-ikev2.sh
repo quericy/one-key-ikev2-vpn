@@ -167,12 +167,12 @@ function download_files(){
     if [ -f strongswan.tar.gz ];then
         echo -e "strongswan.tar.gz [\033[32;1mfound\033[0m]"
     else
-        if ! wget --no-check-certificate https://download.strongswan.org/strongswan.tar.gz;then
+        if ! wget --no-check-certificate https://download.strongswan.org/strongswan-5.3.5.tar.gz;then
             echo "Failed to download strongswan.tar.gz"
             exit 1
         fi
     fi
-    tar xzf strongswan.tar.gz
+    tar xzf strongswan*.tar.gz
     if [ $? -eq 0 ];then
         cd $cur_dir/strongswan-*/
     else

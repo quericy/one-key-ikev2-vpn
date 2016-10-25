@@ -9,14 +9,51 @@ export PATH
 #===============================================================================================
 
 clear
+VER=1.2.0
 echo "#############################################################"
 echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
 echo "# Intro: https://quericy.me/blog/699"
 echo "#"
 echo "# Author:quericy"
 echo "#"
+echo "# Version:$VER"
 echo "#############################################################"
 echo ""
+
+__INTERACTIVE=""
+if [ -t 1 ] ; then
+    __INTERACTIVE="1"
+fi
+
+__green(){
+    if [ "$__INTERACTIVE" ] ; then
+        printf '\033[1;31;32m'
+    fi
+    printf -- "$1"
+    if [ "$__INTERACTIVE" ] ; then
+        printf '\033[0m'
+    fi
+}
+
+__red(){
+    if [ "$__INTERACTIVE" ] ; then
+        printf '\033[1;31;40m'
+    fi
+    printf -- "$1"
+    if [ "$__INTERACTIVE" ] ; then
+        printf '\033[0m'
+    fi
+}
+
+__yellow(){
+    if [ "$__INTERACTIVE" ] ; then
+        printf '\033[1;31;33m'
+    fi
+    printf -- "$1"
+    if [ "$__INTERACTIVE" ] ; then
+        printf '\033[0m'
+    fi
+}
 
 # Install IKEV2
 function install_ikev2(){
@@ -102,8 +139,8 @@ function pre_install(){
     echo "#"
     echo "# Author:quericy"
     echo "#"
+    echo "# Version:$VER"
     echo "#############################################################"
-    echo ""
     echo "please choose the type of your VPS(Xen、KVM: 1  ,  OpenVZ: 2):"
     read -p "your choice(1 or 2):" os_choice
     if [ "$os_choice" = "1" ]; then
@@ -159,16 +196,16 @@ function pre_install(){
     }
     echo "Please confirm the information:"
     echo ""
-    echo -e "the type of your server: [\033[32;1m$os_str\033[0m]"
-    echo -e "the ip(or domain) of your server: [\033[32;1m$vps_ip\033[0m]"
+    echo -e "the type of your server: [$(__green $os_str)]"
+    echo -e "the ip(or domain) of your server: [$(__green $vps_ip)]"
     if [ "$have_cert" = "1" ]; then
-        echo -e "\033[32;1mThese are the certificate you MUST be prepared:\033[0m"
-        echo -e "[\033[32;1m ca.cert.pem \033[0m]:The CA cert or the chain cert."
-        echo -e "[\033[32;1m server.cert.pem \033[0m]:Your server cert."
-        echo -e "[\033[32;1m server.pem \033[0m]:Your private key of the server cert."
-        echo -e "[\033[32;1m Please copy these file to the same directory of this script before start! \033[0m]"
+        echo -e "$(__yellow "These are the certificate you MUST be prepared:")"
+        echo -e "[$(__green "ca.cert.pem")]:The CA cert or the chain cert."
+        echo -e "[$(__green "server.cert.pem")]:Your server cert."
+        echo -e "[$(__green "server.pem")]:Your  key of the server cert."
+        echo -e "[$(__yellow "Please copy these file to the same directory of this script before start!")]"
     else
-        echo -e "the cert_info:[\033[32;1mC=${my_cert_c}, O=${my_cert_o}\033[0m]"
+        echo -e "the cert_info:[$(__green "C=${my_cert_c}, O=${my_cert_o}")]"
     fi
     echo ""
     echo "Press any key to start...or Press Ctrl+C to cancel"
@@ -183,7 +220,7 @@ function pre_install(){
 function download_files(){
     strongswan_file='strongswan-5.5.1.tar.gz'
     if [ -f $strongswan_file ];then
-        echo -e "$strongswan_file [\033[32;1mfound\033[0m]"
+        echo -e "$strongswan_file [$(__green "found")]"
     else
         if ! wget --no-check-certificate https://download.strongswan.org/$strongswan_file;then
             echo "Failed to download $strongswan_file"
@@ -255,27 +292,27 @@ function import_cert(){
    cd $cur_dir
    if [ -f ca.cert.pem ];then
         cp -f ca.cert.pem my_key/ca.cert.pem
-        echo -e "ca.cert.pem [\033[32;1mfound\033[0m]"
+        echo -e "ca.cert.pem [$(__green "found")]"
     else
-        echo -e "ca.cert.pem [\033[33;1mNot found!\033[0m]"
+        echo -e "ca.cert.pem [$(__red "Not found!")]"
         exit
     fi
     if [ -f server.cert.pem ];then
         cp -f server.cert.pem my_key/server.cert.pem
         cp -f server.cert.pem my_key/client.cert.pem
-        echo -e "server.cert.pem [\033[32;1mfound\033[0m]"
-        echo -e "client.cert.pem [\033[32;1mauto create\033[0m]"
+        echo -e "server.cert.pem [$(__green "found")]"
+        echo -e "client.cert.pem [$(__green "auto create")]"
     else
-        echo -e "server.cert.pem [\033[33;1mNot found!\033[0m]"
+        echo -e "server.cert.pem [$(__red "Not found!")]"
         exit
     fi
     if [ -f server.pem ];then
         cp -f server.pem my_key/server.pem
         cp -f server.pem my_key/client.pem
-        echo -e "server.pem [\033[32;1mfound\033[0m]"
-        echo -e "client.pem [\033[32;1mauto create\033[0m]"
+        echo -e "server.pem [$(__green "found")]"
+        echo -e "client.pem [$(__green "auto create")]"
     else
-        echo -e "server.pem [\033[33;1mNot found!\033[0m]"
+        echo -e "server.pem [$(__red "Not found!")]"
         exit
     fi
     cd my_key
@@ -428,7 +465,7 @@ function iptables_set(){
     sysctl -w net.ipv4.ip_forward=1
     ifconfig
     echo "The above content is the network card information of your VPS."
-    echo "Please enter the name of the interface which can be connected to the public network."
+    echo "[$(__yellow "Important")]Please enter the name of the interface which can be connected to the public network."
     if [ "$os" = "1" ]; then
             read -p "Network card interface(default_value:eth0):" interface
         if [ "$interface" = "" ]; then
@@ -496,13 +533,14 @@ EOF
 function success_info(){
     echo "#############################################################"
     echo -e "#"
-    echo -e "# [\033[32;1mInstall Complete\033[0m]"
+    echo -e "# [$(__green "Install Complete")]"
+    echo -e "# Version:$VER"
     echo -e "# There is the default login info of your IPSec/IkeV2 VPN Service"
-    echo -e "# UserName:\033[33;1m myUserName\033[0m"
-    echo -e "# PassWord:\033[33;1m myUserPass\033[0m"
-    echo -e "# PSK:\033[33;1m myPSKkey\033[0m"
-    echo -e "# you should change default username and password in\033[32;1m /usr/local/etc/ipsec.secrets\033[0m"
-    echo -e "# you cert:\033[32;1m ${cur_dir}/my_key/ca.cert.pem \033[0m"
+    echo -e "# UserName:$(__green " myUserName")"
+    echo -e "# PassWord:$(__green " myUserPass")"
+    echo -e "# PSK:$(__green " myPSKkey")"
+    echo -e "# you should change default username and password in$(__green " /usr/local/etc/ipsec.secrets")"
+    echo -e "# you cert:$(__green " ${cur_dir}/my_key/ca.cert.pem ")"
     if [ "$have_cert" = "1" ]; then
     echo -e "# you don't need to install cert if it's be trusted."
     else

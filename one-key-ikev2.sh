@@ -93,22 +93,14 @@ fi
 
 # Ubuntu or CentOS
 function get_system(){
-    get_system_str=`cat /etc/issue`
-    echo "$get_system_str" |grep -q "CentOS"
-    if  [ $? -eq 0 ]
-    then
+    if grep -Eqi "CentOS" /etc/issue || grep -Eq "CentOS" /etc/*-release; then
         system_str="0"
+    elif  grep -Eqi "Ubuntu" /etc/issue || grep -Eq "Ubuntu" /etc/*-release; then
+        system_str="1"
     else
-        echo "$get_system_str" |grep -q "Ubuntu"
-        if [ $? -eq 0 ]
-        then
-            system_str="1"
-        else
-            echo "This Script must be running at the CentOS or Ubuntu!"
-            exit 1
-        fi
+        echo "This Script must be running at the CentOS or Ubuntu!"
+        exit 1
     fi
-    
 }
 
 #install necessary lib

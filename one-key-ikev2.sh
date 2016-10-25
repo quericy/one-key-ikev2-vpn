@@ -2,7 +2,7 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 #===============================================================================================
-#   System Required:  CentOS6.x (32bit/64bit) or Ubuntu
+#   System Required:  CentOS6.x/7 (32bit/64bit) or Ubuntu
 #   Description:  Install IKEV2 VPN for CentOS and Ubuntu
 #   Author: quericy
 #   Intro:  https://quericy.me/blog/699
@@ -11,7 +11,7 @@ export PATH
 clear
 VER=1.2.0
 echo "#############################################################"
-echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+echo "# Install IKEV2 VPN for CentOS6.x/7 (32bit/64bit) or Ubuntu or Debian7/8.*"
 echo "# Intro: https://quericy.me/blog/699"
 echo "#"
 echo "# Author:quericy"
@@ -97,8 +97,10 @@ function get_system(){
         system_str="0"
     elif  grep -Eqi "Ubuntu" /etc/issue || grep -Eq "Ubuntu" /etc/*-release; then
         system_str="1"
+    elif  grep -Eqi "Debian" /etc/issue || grep -Eq "Debian" /etc/*-release; then
+        system_str="1"
     else
-        echo "This Script must be running at the CentOS or Ubuntu!"
+        echo "This Script must be running at the CentOS or Ubuntu or Debian!"
         exit 1
     fi
 }
@@ -126,7 +128,7 @@ function get_my_ip(){
 # Pre-installation settings
 function pre_install(){
     echo "#############################################################"
-    echo "# Install IKEV2 VPN for CentOS6.x (32bit/64bit) or Ubuntu"
+    echo "# Install IKEV2 VPN for CentOS6.x/7 (32bit/64bit) or Ubuntu or Debian7/8.*"
     echo "# Intro: https://quericy.me/blog/699"
     echo "#"
     echo "# Author:quericy"

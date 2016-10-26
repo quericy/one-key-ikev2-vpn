@@ -56,7 +56,7 @@
 
 8. 将提示信息中的证书文件ca.cert.pem拷贝到客户端，修改后缀名为.cer后导入。ios设备使用Ikev1无需导入证书，而是需要在连接时输入共享密钥，共享密钥即是提示信息中的黄字PSK.
 
-客户端配置说明:
+客户端配置说明
 =====
 * 连接的服务器地址和证书保持一致,即取决于签发证书ca.cert.pem时使用的是ip还是域名;
  
@@ -78,7 +78,7 @@
     exit   #退出ps控制台
     ```
 
-卸载方式:
+卸载方式
 ===
 1. 进入脚本所在目录的strongswan文件夹执行:
     ```bash
@@ -95,24 +95,35 @@
 * [dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支:如需在Debian6/7 下使用,请使用该分支的脚本,该脚本由[bestoa](https://github.com/bestoa)修改提供;
 * [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:开发分支,使用最新版本的strongswan,未进过充分测试,用于尝试和添加一些新的功能,未来可能添加对L2TP的兼容支持,以及对ipv6的支持;
 
-PS:
+部分问题解决方案
 ======
-* 服务器重启后默认ipsec不会自启动，请命令手动开启,或添加/usr/local/sbin/ipsec start到自启动脚本文件中(如rc.local等)：
+* ipsec启动问题：服务器重启后默认ipsec不会自启动，请命令手动开启,或添加/usr/local/sbin/ipsec start到自启动脚本文件中(如rc.local等)：
     ```bash
     ipsec start
     ```
 
-* 连上服务器后无法链接外网：
-    * 打开sysctl文件: 
+* ipsec常用指令:
     ```bash
-    vim /etc/sysctl.conf
-    ```    
-    * 修改net.ipv4.ip_forward=1后保存并关闭文件    
-    * 使用以下指令刷新sysctl：
-    ```bash
-    sysctl -p
-    ```    
-    * 如遇报错信息，请重新打开/etc/syctl并将报错的那些代码用#号注释，保存后再刷新sysctl直至不会报错为止。
+    ipsec start   #启动服务
+    ipsec stop    #关闭服务
+    ipsec restart #重启服务
+    ipsec reload  #重新读取
+    ipsec status  #查看状态
+    ipsec --help  #查看帮助
+    ```
+
+* 可连接但是无法访问网络：
+    - 检查iptables是否正常启用,检查iptables规则是否与其他地方冲突,或根据服务器防火墙的实际情况手动修改配置。
+    - 检查sysctl是否开启ip_forward:
+        1. 打开sysctl文件:`vim /etc/sysctl.conf`                
+        2. 修改net.ipv4.ip_forward=1后保存并关闭文件    
+        3. 使用以下指令刷新sysctl：`sysctl -p`
+        4. 如执行后正常回显则表示生效。如显示错误信息，请重新打开/etc/syctl并根据错误信息对应部分用#号注释，保存后再刷新sysctl直至不会报错为止。
+
+* 如果之前使用的自签名证书，后改用SSL证书，部分客户端可能需要卸载之前安装的自签名证书,否则可能会报`Ike凭证不可接受`的错误:
+    * iOS：设置-通用，删除证书对应的描述文件即可；
+    * Windows：Win+R,运行mmc打开Microsoft管理控制台,文件->添加管理单元,添加证书管理单元(必须选计算机账户),展开受信任的根证书颁发机构,找到对应的自签名证书,右键删除即可;
+    * Windows Phone:暂时没有找到可以卸载证书的方法(除非越狱),目前只能重置来解决此问题;
 
 * * *
 

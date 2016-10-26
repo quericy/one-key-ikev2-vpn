@@ -7,7 +7,7 @@
 
 特性
 =============
-> * 服务端要求：Ubuntu或者CentOS-6.*
+> * 服务端要求：Ubuntu或者CentOS-6/7或者Debian
 > * 客户端：
  - iOS/OSX=>ikev1,ikev2
  - Andriod=>ikev1
@@ -23,6 +23,7 @@
 > - 添加导入SSL证书的支持,安装时可选使用证书颁发机构签发的证书还是生成自签名证书;
 > - 网络接口选择提示修改;
 > - 修复文件是否存在判断的问题；
+> - 修改系统类型判断,添加对CentOS7/Debian的支持(未测试)；
 > - 细节修正;
 
 服务端安装说明
@@ -92,7 +93,7 @@
 分支说明
 ==========
 * [master](https://github.com/quericy/one-key-ikev2-vpn/tree/master)分支:经过测试的相对稳定的版本;
-* [dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支:如需在Debian6/7 下使用,请使用该分支的脚本,该脚本由[bestoa](https://github.com/bestoa)修改提供;
+* [dev-debian](https://github.com/quericy/one-key-ikev2-vpn/tree/dev-debian)分支:Debian6/7测试分支,该脚本由[bestoa](https://github.com/bestoa)修改提供;
 * [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:开发分支,使用最新版本的strongswan,未进过充分测试,用于尝试和添加一些新的功能,未来可能添加对L2TP的兼容支持,以及对ipv6的支持;
 
 部分问题解决方案

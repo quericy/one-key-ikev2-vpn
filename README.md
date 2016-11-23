@@ -93,6 +93,7 @@
 分支说明
 ==========
 * [master](https://github.com/quericy/one-key-ikev2-vpn/tree/master)分支:经过测试的相对稳定的版本;
+* dev-debian分支:~~Debian6/7测试分支,该脚本由[bestoa](https://github.com/bestoa)修改提供~~.主分支已提供对Debian的支持,该分支已废弃:[#59](https://github.com/quericy/one-key-ikev2-vpn/issues/59);
 * [dev](https://github.com/quericy/one-key-ikev2-vpn/tree/dev)分支:开发分支,使用最新版本的strongswan,未进过充分测试,用于尝试和添加一些新的功能,未来可能添加对L2TP的兼容支持,以及对ipv6的支持;
 
 部分问题解决方案

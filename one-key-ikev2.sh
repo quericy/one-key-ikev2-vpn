@@ -70,7 +70,7 @@ function install_ikev2(){
     configure_strongswan
     configure_secrets
     SNAT_set
-    iptables_set
+    iptables_check
     ipsec restart
     success_info
 }
@@ -456,12 +456,32 @@ function SNAT_set(){
     fi
 }
 
-# iptables set
-function iptables_set(){
+# iptables check
+function iptables_check(){
     cat > /etc/sysctl.d/10-ipsec.conf<<-EOF
 net.ipv4.ip_forward=1
 EOF
     sysctl --system
+    echo "Do you use firewall in CentOS7 instead of iptables?"
+    read -p "yes or no?(default_value:no):" use_firewall
+    if [ "$use_firewall" = "yes" ]; then
+        firewall_set
+    else
+        iptables_set
+    fi
+}
+
+# firewall set in CentOS7
+function firewall_set(){
+    firewall-cmd --permanent --add-service="ipsec"
+    firewall-cmd --permanent --add-port=500/udp
+    firewall-cmd --permanent --add-port=4500/udp
+    firewall-cmd --permanent --add-masquerade
+    firewall-cmd --reload
+}
+
+# iptables set
+function iptables_set(){
     echo -e "$(__yellow "ip address info:")"
     ip address | grep inet
     echo "The above content is the network card information of your VPS."

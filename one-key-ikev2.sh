@@ -444,7 +444,8 @@ function SNAT_set(){
     read -p "yes or no?(default_value:no):" use_SNAT
     if [ "$use_SNAT" = "yes" ]; then
         use_SNAT_str="1"
-        ifconfig
+        echo -e "$(__yellow "ip address info:")"
+        ip address | grep inet
         echo "Some servers has elastic IP (AWS) or mapping IP.In this case,you should input the IP address which is binding in network interface."
         read -p "static ip or network interface ip (default_value:${IP}):" static_ip
     if [ "$static_ip" = "" ]; then
@@ -457,8 +458,12 @@ function SNAT_set(){
 
 # iptables set
 function iptables_set(){
-    sysctl -w net.ipv4.ip_forward=1
-    ifconfig
+    cat > /etc/sysctl.d/10-ipsec.conf<<-EOF
+net.ipv4.ip_forward=1
+EOF
+    sysctl --system
+    echo -e "$(__yellow "ip address info:")"
+    ip address | grep inet
     echo "The above content is the network card information of your VPS."
     echo "[$(__yellow "Important")]Please enter the name of the interface which can be connected to the public network."
     if [ "$os" = "1" ]; then

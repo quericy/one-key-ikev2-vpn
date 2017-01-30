@@ -21,6 +21,8 @@
 ==========
 > - 添加SSL证书自动申请自动更新并应用于IKEv2的解决方案,详见这篇博文:[SSL证书自动更新并应用到IKEv2, Nginx](https://quericy.me/blog/860/) ;
 > - 添加对CentOS7的firewall防火墙的支持;
+> - 使用ip address替换已被废弃的ifconfig;
+> - 生成单独的sysctl配置文件/etc/sysctl.d/10-ipsec.conf单独加载，用于开启ipv4转发(如以后卸载或需要关闭net.ipv4.ip_forward,请记得删除此文件);
 > - 升级strongswan版本到5.5.1,解决iOS9和iOS10的兼容性问题(感谢[caasiu](https://github.com/caasiu)的提醒[#21](https://github.com/quericy/one-key-ikev2-vpn/issues/21));
 > - 添加导入SSL证书的支持,安装时可选使用证书颁发机构签发的证书还是生成自签名证书;
 

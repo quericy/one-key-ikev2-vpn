@@ -473,6 +473,9 @@ EOF
 
 # firewall set in CentOS7
 function firewall_set(){
+    if ! systemctl is-active firewalld > /dev/null; then
+        systemctl start firewalld
+    fi
     firewall-cmd --permanent --add-service="ipsec"
     firewall-cmd --permanent --add-port=500/udp
     firewall-cmd --permanent --add-port=4500/udp

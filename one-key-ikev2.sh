@@ -78,7 +78,7 @@ function disable_selinux(){
 # Pre-installation settings
 function pre_install(){
     echo "Preparing, Please wait a moment..."
-    echo "[$(__red "Error")]Please input the domain name of your VPS:"
+    echo "[$(__green " Info")]Please input the domain name of your VPS:"
     read -p "domain name:" domain_name
     if [ "$domain_name" = "" ]; then
         echo "[$(__red "Error")]Please enter the domain name of the vps."

@@ -136,7 +136,7 @@ function pre_install(){
 
 # configure and install strongswan
 function setup_strongswan(){
-    yum -y strongswan strongswan-plugin-xauth-generic strongswan-plugin-eap-mschapv2 strongswan-plugin-eap-md5
+    yum -y install strongswan strongswan-plugin-xauth-generic strongswan-plugin-eap-mschapv2 strongswan-plugin-eap-md5
 }
 
 # configure cert and key
@@ -225,9 +225,8 @@ EOF
 
     if ! grep -qs "release 7." /etc/redhat-release; then
        firewall_set
-    fi
     else
-        iptables_set
+       iptables_set
     fi
 }
 

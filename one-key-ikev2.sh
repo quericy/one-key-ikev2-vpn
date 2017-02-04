@@ -174,7 +174,7 @@ conn ikev2-eap-mschapv2
     leftfirewall=yes
     rightauth=eap-mschapv2
     right=%any
-    rightsourceip=10.31.2.0/50
+    rightsourceip=10.31.2.0/24
     eap_identity=%any
     auto=add
 conn ikev2-eap-md5
@@ -189,7 +189,7 @@ conn ikev2-eap-md5
     rightauth=eap-md5
     eap_identity=%any
     right=%any
-    rightsourceip=10.31.2.0/50
+    rightsourceip=10.31.2.0/24
     auto=add
 EOF
 }
@@ -223,7 +223,7 @@ net.ipv4.ip_forward=1
 EOF
     sysctl --system
 
-    if ! grep -qs "release 7." /etc/redhat-release; then
+    if grep -qs "release 7." /etc/redhat-release; then
        firewall_set
     else
        iptables_set
@@ -245,12 +245,12 @@ function firewall_set(){
 # iptables set
 function iptables_set(){
     iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-    iptables -A FORWARD -s 10.31.2.0/50  -j ACCEPT
+    iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
     iptables -A INPUT -i $interface -p esp -j ACCEPT
     iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
     iptables -A INPUT -i $interface -p udp --dport 4500 -j ACCEPT
     #iptables -A FORWARD -j REJECT
-    iptables -t nat -A POSTROUTING -s 10.31.2.0/50 -o $interface -j MASQUERADE
+    iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
     
     service iptables save
 }

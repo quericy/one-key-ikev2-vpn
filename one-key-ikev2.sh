@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
@@ -54,7 +54,7 @@ function install_ikev2(){
     configure_ipsec
     configure_strongswan
     iptables_check
-    ipsec restart
+    service ipsec restart
     success_info
 }
 

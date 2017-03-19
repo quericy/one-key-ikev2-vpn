@@ -426,7 +426,7 @@ function configure_strongswan(){
                 include strongswan.d/charon/*.conf
         }
         dns1 = 8.8.8.8
-        dns2 = 8.8.4.4
+        dns2 = 2001:4860:4860::8888
         nbns1 = 8.8.8.8
         nbns2 = 8.8.4.4
 }

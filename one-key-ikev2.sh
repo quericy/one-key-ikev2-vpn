@@ -108,10 +108,10 @@ function get_system(){
 #install necessary lib
 function yum_install(){
     if [ "$system_str" = "0" ]; then
-    yum -y update
+    #yum -y update
     yum -y install pam-devel openssl-devel make gcc curl
     else
-    apt-get -y update
+    #apt-get -y update
     apt-get -y install libpam0g-dev libssl-dev make gcc curl
     fi
 }
@@ -332,7 +332,12 @@ function create_cert(){
 
 # configure the ipsec.conf
 function configure_ipsec(){
- cat > /usr/local/etc/ipsec.conf<<-EOF
+echo -e "$(__yellow "ip address info:")"
+ip address | grep inet
+read -p "ipv6address(default_value:eth0):" ipv6address
+if [ "$ipv6address" = "" ]; then
+    interface="fec2::/16"
+cat > /usr/local/etc/ipsec.conf<<-EOF
 config setup
     uniqueids=never 
 
@@ -341,12 +346,12 @@ conn iOS_cert
     fragmentation=yes
     left=%defaultroute
     leftauth=pubkey
-    leftsubnet=0.0.0.0/0
+    leftsubnet=0.0.0.0/0,::/0
     leftcert=server.cert.pem
     right=%any
     rightauth=pubkey
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,$ipv6address
     rightcert=client.cert.pem
     auto=add
 
@@ -354,7 +359,7 @@ conn android_xauth_psk
     keyexchange=ikev1
     left=%defaultroute
     leftauth=psk
-    leftsubnet=0.0.0.0/0
+    leftsubnet=0.0.0.0/0,::/0
     right=%any
     rightauth=psk
     rightauth2=xauth
@@ -365,11 +370,11 @@ conn networkmanager-strongswan
     keyexchange=ikev2
     left=%defaultroute
     leftauth=pubkey
-    leftsubnet=0.0.0.0/0
+    leftsubnet=0.0.0.0/0,::/0
     leftcert=server.cert.pem
     right=%any
     rightauth=pubkey
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,$ipv6address
     rightcert=client.cert.pem
     auto=add
 
@@ -381,11 +386,11 @@ conn ios_ikev2
     left=%defaultroute
     leftid=${vps_ip}
     leftsendcert=always
-    leftsubnet=0.0.0.0/0
+    leftsubnet=0.0.0.0/0,::/0
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,$ipv6address
     rightsendcert=never
     eap_identity=%any
     dpdaction=clear
@@ -398,11 +403,11 @@ conn windows7
     rekey=no
     left=%defaultroute
     leftauth=pubkey
-    leftsubnet=0.0.0.0/0
+    leftsubnet=0.0.0.0/0,::/0
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,$ipv6address
     rightsendcert=never
     eap_identity=%any
     auto=add
@@ -495,8 +500,6 @@ function iptables_set(){
             interface="eth0"
         fi
         iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-        iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
-        iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
         iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
         iptables -A INPUT -i $interface -p esp -j ACCEPT
         iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
@@ -506,12 +509,8 @@ function iptables_set(){
         iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
         #iptables -A FORWARD -j REJECT
         if [ "$use_SNAT_str" = "1" ]; then
-            iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
-            iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
             iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
         else
-            iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-            iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
             iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
         fi
     else
@@ -520,8 +519,6 @@ function iptables_set(){
             interface="venet0"
         fi
         iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
-        iptables -A FORWARD -s 10.31.0.0/24  -j ACCEPT
-        iptables -A FORWARD -s 10.31.1.0/24  -j ACCEPT
         iptables -A FORWARD -s 10.31.2.0/24  -j ACCEPT
         iptables -A INPUT -i $interface -p esp -j ACCEPT
         iptables -A INPUT -i $interface -p udp --dport 500 -j ACCEPT
@@ -531,12 +528,8 @@ function iptables_set(){
         iptables -A INPUT -i $interface -p tcp --dport 1723 -j ACCEPT
         #iptables -A FORWARD -j REJECT
         if [ "$use_SNAT_str" = "1" ]; then
-            iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j SNAT --to-source $static_ip
-            iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j SNAT --to-source $static_ip
             iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j SNAT --to-source $static_ip
         else
-            iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $interface -j MASQUERADE
-            iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $interface -j MASQUERADE
             iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $interface -j MASQUERADE
         fi
     fi

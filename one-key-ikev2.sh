@@ -413,6 +413,7 @@ conn windows7
     auto=add
 
 EOF
+
 }
 
 # configure the strongswan.conf

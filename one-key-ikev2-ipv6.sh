@@ -352,7 +352,7 @@ conn iOS_cert
     right=%any
     rightauth=pubkey
     rightauth2=xauth
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:19f0:7001:22de::/64
     rightcert=client.cert.pem
     auto=add
 
@@ -375,7 +375,7 @@ conn networkmanager-strongswan
     leftcert=server.cert.pem
     right=%any
     rightauth=pubkey
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:19f0:7001:22de::/64
     rightcert=client.cert.pem
     auto=add
 
@@ -391,7 +391,7 @@ conn ios_ikev2
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:19f0:7001:22de::/64
     rightsendcert=never
     eap_identity=%any
     dpdaction=clear
@@ -408,7 +408,7 @@ conn windows7
     leftcert=server.cert.pem
     right=%any
     rightauth=eap-mschapv2
-    rightsourceip=10.31.2.0/24
+    rightsourceip=10.31.2.0/24,2001:19f0:7001:22de::/64
     rightsendcert=never
     eap_identity=%any
     auto=add

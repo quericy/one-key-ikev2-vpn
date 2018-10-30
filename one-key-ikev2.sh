@@ -99,6 +99,8 @@ function get_system(){
         system_str="1"
     elif  grep -Eqi "Debian" /etc/issue || grep -Eq "Debian" /etc/*-release; then
         system_str="1"
+    elif  grep -Eqi "Raspbian" /etc/issue || grep -Eq "Raspbian" /etc/*-release; then
+        system_str="1"
     else
         echo "This Script must be running at the CentOS or Ubuntu or Debian!"
         exit 1

@@ -128,6 +128,14 @@
     * Windows：Win+R,运行mmc打开Microsoft管理控制台,文件->添加管理单元,添加证书管理单元(必须选计算机账户),展开受信任的根证书颁发机构,找到对应的自签名证书,右键删除即可;
     * Windows Phone:暂时没有找到可以卸载证书的方法(除非越狱),目前只能重置来解决此问题;
 
+* 部分vps可能会出现无法连接到https://download.strongswan.org的情况，此时可以本地下载strongswan文件，然后利用`scp`等工具上传至vps相应目录
+   ```
+   wget --no-check-certificate https://download.strongswan.org/strongswan-5.5.1.tar.gz
+   
+   scp -P your-vps-port /path/to/file account@your-vps-ip:~
+   ```
+
+
 * * *
 
 如有其他疑问请戳本人博客：[https://quericy.me/blog/699](https://quericy.me/blog/699)

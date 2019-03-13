@@ -109,6 +109,7 @@ function show_help() {
     echo -e "  -p            password for vpn, default: \033[33;1m ${default_user_pass}\033[0m"
     echo -e "  -k            psk for vpn, default: \033[33;1m ${default_user_psk}\033[0m"
     echo -e "  -i            prompt before using default value. defalut: \033[33;1m ${interactive}\033[0m"
+    echo -e "  -y            no prompt before using default value. defalut: \033[33;1m ${interactive}\033[0m"
     echo -e "  -s            Use SNAT, y for use. defalut: \033[33;1m ${use_snat}\033[0m"
     echo -e "  -f            Network card interface, default:\033[33;1m ${default_if}\033[0m"
     echo -e "  -v            strongswan file version, default:\033[33;1m ${default_strongswan}\033[0m"
@@ -118,7 +119,7 @@ function show_help() {
     echo -e "  -h            display this help and exit"
 }
 
-while getopts "h?ad:r:c:o:n:u:p:k:isf:v:b:l:gz:m:" opt; do
+while getopts "h?ad:r:c:o:n:u:p:k:iysf:v:b:l:gz:m:" opt; do
     case "$opt" in
     h|\?) show_help; exit 0 ;;
     a)  yum_update="y" ;;
@@ -132,7 +133,8 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:v:b:l:gz:m:" opt; do
     u)  default_user_name=$OPTARG ;;
     p)  default_user_pass=$OPTARG ;;
     k)  default_user_psk=$OPTARG ;;
-    i)  interactive=$([ -z "$OPTARG" ] && echo $OPTARG || echo 1) ;;
+    i)  interactive=1 ;;
+    y)  interactive=0 ;;
     s)  use_snat="y" ;;
     f)  default_if=$OPTARG ;;
     v)  default_strongswan=$OPTARG ;;
@@ -857,7 +859,7 @@ function send_mail() {
 
     mutt -e "set envelope_from=yes" -e "set from=xy.kong@gmail.com" -a ${vpn_key_folder}/* -s "VPN ${vps_region}" -- ${mail_address}
 
-    echo -e "\033[32;1mmail vpn info to ${mail_address}.\033[0m"
+    echo -e "$(__green "send ikev2 configuration to ${mail_address}.")"
 }
 
 # Initialization step

@@ -54,6 +54,7 @@ use_snat=0
 ignore_strongswan=0
 mail_address="xy.kong@icloud.com"
 
+# tests a file descriptor to see if it is attached to a terminal.
 if [ -t 1 ] ; then
     interactive=1
 fi
@@ -131,7 +132,7 @@ while getopts "h?ad:r:c:o:n:u:p:k:isf:v:b:l:gz:m:" opt; do
     u)  default_user_name=$OPTARG ;;
     p)  default_user_pass=$OPTARG ;;
     k)  default_user_psk=$OPTARG ;;
-    i)  interactive=1 ;;
+    i)  interactive=$([ -z "$OPTARG" ] && echo $OPTARG || echo 1) ;;
     s)  use_snat="y" ;;
     f)  default_if=$OPTARG ;;
     v)  default_strongswan=$OPTARG ;;

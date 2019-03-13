@@ -194,6 +194,8 @@ function get_system(){
         os_type="1"
     elif  grep -Eqi "Debian" /etc/issue || grep -Eq "Debian" /etc/*-release; then
         os_type="1"
+    elif  grep -Eqi "Raspbian" /etc/issue || grep -Eq "Raspbian" /etc/*-release; then
+        os_type="1"
     else
         echo "This Script must be running at the CentOS or Ubuntu or Debian!"
         exit 1
@@ -678,16 +680,10 @@ function SNAT_set(){
 
 # iptables check
 function iptables_check(){
-    if [ $(sysctl -h | grep system) ] ; then
-
         cat > /etc/sysctl.d/10-ipsec.conf<<-EOF
 net.ipv4.ip_forward=1
 EOF
         sysctl --system
-    else
-        sysctl -w net.ipv4.ip_forward=1
-    fi
-
     echo "Do you use firewall in CentOS7 instead of iptables?"
     read -p "yes or no?(default_value:no):" use_firewall
     if [ "$use_firewall" = "yes" ]; then

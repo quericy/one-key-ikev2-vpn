@@ -816,7 +816,7 @@ function generate_mobile_config() {
     #my_user_name
     #my_user_pass
     #vps_ip
-    vpn_name=`curl -s ip.cn?ip=$vps_ip | awk -F " |：" '{print $2"("$4")"}'`
+    vpn_name=`curl -s "https://ip.cn/index.php?ip=$vps_ip" | awk -F " |：" '{print $2"("$4")"}'`
     ca_pfx_base64=`base64 ${vpn_key_folder}/ca.cert.p12 | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n//g'`
     #my_cert_cn
     #cert_password
@@ -842,8 +842,8 @@ function send_mail() {
         return
     fi
 
-    vps_region=`curl -s ip.cn?ip=$vps_ip`
-    static_region=`curl -s ip.cn?ip=$static_ip`
+    vps_region=`curl -s "https://ip.cn/index.php?ip=$vps_ip"`
+    static_region=`curl -s "https://ip.cn/index.php?ip=$static_ip"`
 
     echo -e "\
     Network card interface:${interface} \n\

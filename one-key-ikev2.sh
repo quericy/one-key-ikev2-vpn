@@ -381,9 +381,13 @@ function pre_install(){
     else
         echo -e "the cert_info:[$(__green "C=${my_cert_c}, O=${my_cert_o}")]"
     fi
-    echo ""
-    echo "Press any key to start...or Press Ctrl+C to cancel"
-    char=`get_char`
+
+    if [ ${interactive} -ne 0 ] ; then
+        echo ""
+        echo "Press any key to start...or Press Ctrl+C to cancel"
+        char=`get_char`
+    fi
+
     #Current folder
     cur_dir=`pwd`
     cd $cur_dir
@@ -688,7 +692,11 @@ net.ipv4.ip_forward=1
 EOF
         sysctl --system
     echo "Do you use firewall in CentOS7 instead of iptables?"
-    read -p "yes or no?(default_value:no):" use_firewall
+    
+    if [ ${interactive} -ne 0 ] ; then
+        read -p "yes or no?(default_value:no):" use_firewall
+    fi
+
     if [ "$use_firewall" = "yes" ]; then
         firewall_set
     else

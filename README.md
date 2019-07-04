@@ -1,7 +1,12 @@
-# 一键搭建适用于Ubuntu/CentOS的IKEV2/L2TP的VPN
+# 一键搭建适用于Ubuntu/Debian/CentOS的IKEV2/L2TP的VPN
 
 ------
 [![Author](https://img.shields.io/badge/author-%40quericy-blue.svg)](https://quericy.me)   [![Platform](https://img.shields.io/badge/Platform-%20Ubuntu%2CCentOS%20-green.svg)]()  [![GitHub stars](https://img.shields.io/github/stars/quericy/one-key-ikev2-vpn.svg)](https://github.com/quericy/one-key-ikev2-vpn/stargazers)  [![GitHub license](https://img.shields.io/badge/license-GPLv3-yellowgreen.svg)](https://raw.githubusercontent.com/quericy/one-key-ikev2-vpn/master/LICENSE)
+
+修改自：https://github.com/quericy/one-key-ikev2-vpn
+
+更新：2016/09/14 适配 CentOS 7
+更新：2016/09/16 适配 Debian
 
 使用bash脚本一键搭建Ikev2的vpn服务端.
 
@@ -28,9 +33,25 @@
 
 服务端安装说明
 ==========
+0. Basic Installation
+
+one-key-ikev2 is installed by running one of the following commands in your terminal. You can install this via the command-line with either `curl` or `wget`.
+
+#### via curl
+
+```shell
+bash <( curl -fsSL https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh )
+```
+
+#### via wget
+
+```shell
+bash <( wget --no-check-certificate https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh -O - )
+```
+
 1. 下载脚本:
     ```shell
-    wget --no-check-certificate https://raw.githubusercontent.com/quericy/one-key-ikev2-vpn/master/one-key-ikev2.sh
+    wget --no-check-certificate https://raw.githubusercontent.com/xykong/one-key-ikev2-vpn/master/one-key-ikev2.sh
     ```
     * 注:如需使用其他分支的脚本,请将上述url中的master修改为分支名称,各分支区别详见本页的[分支说明](#分支说明)节点
 

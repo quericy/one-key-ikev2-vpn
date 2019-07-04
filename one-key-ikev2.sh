@@ -300,8 +300,16 @@ function import_cert(){
         echo -e "server.cert.pem [$(__green "found")]"
         echo -e "client.cert.pem [$(__green "auto create")]"
     else
-        echo -e "server.cert.pem [$(__red "Not found!")]"
-        exit
+        echo -e "server.cert.pem [$(__red "Not found!,auto creating...")]"
+        ipsec pki --gen --outform pem > server.pem
+        ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
+        --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
+        --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
+        --outform pem > server.cert.pem
+        cp -f server.cert.pem my_key/server.cert.pem
+        cp -f server.cert.pem my_key/client.cert.pem
+        echo -e "server.cert.pem [$(__green "created")]"
+        echo -e "client.cert.pem [$(__green "auto create")]"
     fi
     if [ -f server.pem ];then
         cp -f server.pem my_key/server.pem

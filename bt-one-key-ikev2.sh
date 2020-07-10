@@ -65,7 +65,6 @@ function install_ikev2(){
     pre_install
     download_files
     setup_strongswan
-    get_key
     configure_ipsec
     configure_strongswan
     configure_secrets
@@ -149,72 +148,13 @@ function pre_install(){
                 else
                 echo "wrong choice!"
                 exit 1
-            fi
-    fi
-    echo "please input the ip (or domain) of your VPS:"
-    read -p "ip or domain(default_value:${IP}):" vps_ip
-    if [ "$vps_ip" = "" ]; then
-        vps_ip=$IP
-    fi
-
-    echo "Would you want to import existing cert? You NEED copy your cert file to the same directory of this script"
-    read -p "yes or no?(default_value:no):" have_cert
-    if [ "$have_cert" = "yes" ]; then
-        have_cert="1"
-    else
-        have_cert="0"
-        echo "please input the cert country(C):"
-        read -p "C(default value:com):" my_cert_c
-        if [ "$my_cert_c" = "" ]; then
-            my_cert_c="com"
-        fi
-        echo "please input the cert organization(O):"
-        read -p "O(default value:myvpn):" my_cert_o
-        if [ "$my_cert_o" = "" ]; then
-            my_cert_o="myvpn"
-        fi
-        echo "please input the cert common name(CN):"
-        read -p "CN(default value:VPN CA):" my_cert_cn
-        if [ "$my_cert_cn" = "" ]; then
-            my_cert_cn="VPN CA"
-        fi
-    fi
-
-    echo "####################################"
-    get_char(){
-        SAVEDSTTY=`stty -g`
-        stty -echo
-        stty cbreak
-        dd if=/dev/tty bs=1 count=1 2> /dev/null
-        stty -raw
-        stty echo
-        stty $SAVEDSTTY
-    }
-    echo "Please confirm the information:"
-    echo ""
-    echo -e "the type of your server: [$(__green $os_str)]"
-    echo -e "the ip(or domain) of your server: [$(__green $vps_ip)]"
-    if [ "$have_cert" = "1" ]; then
-        echo -e "$(__yellow "These are the certificate you MUST be prepared:")"
-        echo -e "[$(__green "ca.cert.pem")]:The CA cert or the chain cert."
-        echo -e "[$(__green "server.cert.pem")]:Your server cert."
-        echo -e "[$(__green "server.pem")]:Your  key of the server cert."
-        echo -e "[$(__yellow "Please copy these file to the same directory of this script before start!")]"
-    else
-        echo -e "the cert_info:[$(__green "C=${my_cert_c}, O=${my_cert_o}")]"
-    fi
-    echo ""
-    echo "Press any key to start...or Press Ctrl+C to cancel"
-    char=`get_char`
-    #Current folder
-    cur_dir=`pwd`
-    cd $cur_dir
+           fi  
 }
 
 
 # Download strongswan
 function download_files(){
-    strongswan_version='strongswan-5.5.1'
+    strongswan_version='strongswan-5.8.4'
     strongswan_file="$strongswan_version.tar.gz"
     if [ -f $strongswan_file ];then
         echo -e "$strongswan_file [$(__green "found")]"
@@ -254,91 +194,6 @@ function setup_strongswan(){
     make; make install
 }
 
-# configure cert and key
-function get_key(){
-    cd $cur_dir
-    if [ ! -d my_key ];then
-        mkdir my_key
-    fi
-    if [ "$have_cert" = "1" ]; then
-        import_cert
-    else
-        create_cert
-    fi
-
-    echo "####################################"
-    get_char(){
-        SAVEDSTTY=`stty -g`
-        stty -echo
-        stty cbreak
-        dd if=/dev/tty bs=1 count=1 2> /dev/null
-        stty -raw
-        stty echo
-        stty $SAVEDSTTY
-    }
-    cp -f ca.cert.pem /usr/local/etc/ipsec.d/cacerts/
-    cp -f server.cert.pem /usr/local/etc/ipsec.d/certs/
-    cp -f server.pem /usr/local/etc/ipsec.d/private/
-    cp -f client.cert.pem /usr/local/etc/ipsec.d/certs/
-    cp -f client.pem  /usr/local/etc/ipsec.d/private/
-    echo "Cert copy completed"
-}
-
-# import cert if user has ssl certificate
-function import_cert(){
-   cd $cur_dir
-   if [ -f ca.cert.pem ];then
-        cp -f ca.cert.pem my_key/ca.cert.pem
-        echo -e "ca.cert.pem [$(__green "found")]"
-    else
-        echo -e "ca.cert.pem [$(__red "Not found!")]"
-        exit
-    fi
-    if [ -f server.cert.pem ];then
-        cp -f server.cert.pem my_key/server.cert.pem
-        cp -f server.cert.pem my_key/client.cert.pem
-        echo -e "server.cert.pem [$(__green "found")]"
-        echo -e "client.cert.pem [$(__green "auto create")]"
-    else
-        echo -e "server.cert.pem [$(__red "Not found!,auto creating...")]"
-        ipsec pki --gen --outform pem > server.pem
-        ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
-        --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
-        --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
-        --outform pem > server.cert.pem
-        cp -f server.cert.pem my_key/server.cert.pem
-        cp -f server.cert.pem my_key/client.cert.pem
-        echo -e "server.cert.pem [$(__green "created")]"
-        echo -e "client.cert.pem [$(__green "auto create")]"
-    fi
-    if [ -f server.pem ];then
-        cp -f server.pem my_key/server.pem
-        cp -f server.pem my_key/client.pem
-        echo -e "server.pem [$(__green "found")]"
-        echo -e "client.pem [$(__green "auto create")]"
-    else
-        echo -e "server.pem [$(__red "Not found!")]"
-        exit
-    fi
-    cd my_key
-}
-
-# auto create certificate
-function create_cert(){
-    cd $cur_dir
-    cd my_key
-    ipsec pki --gen --outform pem > ca.pem
-    ipsec pki --self --in ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${my_cert_cn}" --ca --outform pem >ca.cert.pem
-    ipsec pki --gen --outform pem > server.pem
-    ipsec pki --pub --in server.pem | ipsec pki --issue --cacert ca.cert.pem \
-    --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=${vps_ip}" \
-    --san="${vps_ip}" --flag serverAuth --flag ikeIntermediate \
-    --outform pem > server.cert.pem
-    ipsec pki --gen --outform pem > client.pem
-    ipsec pki --pub --in client.pem | ipsec pki --issue --cacert ca.cert.pem --cakey ca.pem --dn "C=${my_cert_c}, O=${my_cert_o}, CN=VPN Client" --outform pem > client.cert.pem
-    echo "configure the pkcs12 cert password(Can be empty):"
-    openssl pkcs12 -export -inkey client.pem -in client.cert.pem -name "client" -certfile ca.cert.pem -caname "${my_cert_cn}"  -out client.cert.p12
-}
 
 # configure the ipsec.conf
 function configure_ipsec(){
@@ -352,7 +207,7 @@ conn iOS_cert
     left=%defaultroute
     leftauth=pubkey
     leftsubnet=0.0.0.0/0
-    leftcert=server.cert.pem
+    leftcert= /www/server/panel/vhost/letsencrypt/www.xxx.com/fullchain.pem
     right=%any
     rightauth=pubkey
     rightauth2=xauth
@@ -376,7 +231,7 @@ conn networkmanager-strongswan
     left=%defaultroute
     leftauth=pubkey
     leftsubnet=0.0.0.0/0
-    leftcert=server.cert.pem
+    leftcert= /www/server/panel/vhost/letsencrypt/www.xxx.com/fullchain.pem
     right=%any
     rightauth=pubkey
     rightsourceip=10.31.2.0/24
@@ -392,7 +247,7 @@ conn ios_ikev2
     leftid=${vps_ip}
     leftsendcert=always
     leftsubnet=0.0.0.0/0
-    leftcert=server.cert.pem
+    leftcert= /www/server/panel/vhost/letsencrypt/www.xxx.com/fullchain.pem
     right=%any
     rightauth=eap-mschapv2
     rightsourceip=10.31.2.0/24
@@ -409,7 +264,7 @@ conn windows7
     left=%defaultroute
     leftauth=pubkey
     leftsubnet=0.0.0.0/0
-    leftcert=server.cert.pem
+    leftcert= /www/server/panel/vhost/letsencrypt/www.xxx.com/fullchain.pem
     right=%any
     rightauth=eap-mschapv2
     rightsourceip=10.31.2.0/24
@@ -442,10 +297,10 @@ EOF
 # configure the ipsec.secrets
 function configure_secrets(){
     cat > /usr/local/etc/ipsec.secrets<<-EOF
-: RSA server.pem
-: PSK "myPSKkey"
-: XAUTH "myXAUTHPass"
-myUserName %any : EAP "myUserPass"
+: RSA /www/server/panel/vhost/letsencrypt/cdn02.xxx.com/privkey.pem
+: PSK "666"
+: XAUTH "666"
+test %any : EAP "pass"
 EOF
 }
 

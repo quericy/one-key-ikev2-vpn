@@ -214,7 +214,7 @@ function pre_install(){
 
 # Download strongswan
 function download_files(){
-    strongswan_version='strongswan-5.5.1'
+    strongswan_version='strongswan-5.9.0'
     strongswan_file="$strongswan_version.tar.gz"
     if [ -f $strongswan_file ];then
         echo -e "$strongswan_file [$(__green "found")]"
@@ -425,7 +425,9 @@ function configure_strongswan(){
  cat > /usr/local/etc/strongswan.conf<<-EOF
  charon {
         load_modular = yes
-        duplicheck.enable = no
+        duplicheck.enable {
+                enable = no
+        }
         compress = yes
         plugins {
                 include strongswan.d/charon/*.conf

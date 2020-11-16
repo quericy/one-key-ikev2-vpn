@@ -425,7 +425,9 @@ function configure_strongswan(){
  cat > /usr/local/etc/strongswan.conf<<-EOF
  charon {
         load_modular = yes
-        duplicheck.enable = no
+        duplicheck {
+                enable = no
+        }
         compress = yes
         plugins {
                 include strongswan.d/charon/*.conf
